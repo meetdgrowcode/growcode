@@ -14,7 +14,7 @@ import { jsPDF } from "jspdf";
 function getReviewInfo() {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth(); // 0 = Jan, 11 = Dec
+  const month = now.getMonth(); 
 
   let lastReview: Date;
   let nextReview: Date;

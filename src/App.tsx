@@ -18,6 +18,8 @@ import BlogDetailPage from "./pages/BlogDetailPage";
 import PortfolioDetailPage from "./pages/PortfolioDetailPage";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsAndConditions from "@/pages/TermsAndConditions";
+import Careers from "./pages/Careers";
+import ApplyForm from "./pages/ApplyForm";
 function App() {
   const { isOpen, activeLink } = useSelector((state: RootState) => state.nav);
 
@@ -42,7 +44,14 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogDetailPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route
+              path="/terms-and-conditions"
+              element={<TermsAndConditions />}
+            />
+            
+            <Route path="/careers" element={<Careers />} />
+
+            <Route path="/apply/:jobId" element={<ApplyForm />} />
           </Routes>
         </main>
         <Footer />
