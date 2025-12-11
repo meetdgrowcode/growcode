@@ -50,7 +50,7 @@ export function Navbar({ isOpen, activeLink }: NavbarProps) {
               type="button"
               onClick={() => setCompanyOpen((prev) => !prev)}
               className={`flex items-center gap-1 hover:text-gray-700 ${
-                ["About", "Blog", "Privacy", "Terms"].includes(activeLink)
+                ["About", "Blog", "Privacy", "Terms", "Careers"].includes(activeLink)
                   ? "text-gray-900"
                   : "text-gray-600"
               }`}
@@ -64,7 +64,7 @@ export function Navbar({ isOpen, activeLink }: NavbarProps) {
             </button>
 
             {companyOpen && (
-              <div className="absolute left-0 mt-2 w-56 rounded-md border bg-white shadow-md z-50">
+              <div className="absolute left-0 z-50 mt-2 w-56 rounded-md border bg-white shadow-md">
                 <Link
                   to="/about"
                   onClick={() => {
@@ -96,6 +96,17 @@ export function Navbar({ isOpen, activeLink }: NavbarProps) {
                   className="block px-4 py-2 text-sm hover:bg-gray-100"
                 >
                   Life &amp; Culture
+                </Link>
+
+                <Link
+                  to="/careers"
+                  onClick={() => {
+                    dispatch(setActiveLink("Careers"));
+                    setCompanyOpen(false);
+                  }}
+                  className="block px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Careers
                 </Link>
 
                 <Link
@@ -250,6 +261,17 @@ export function Navbar({ isOpen, activeLink }: NavbarProps) {
                   </Link>
 
                   <Link
+                    to="/careers"
+                    className="block px-3 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => {
+                      dispatch(setActiveLink("Careers"));
+                      dispatch(toggleMenu());
+                    }}
+                  >
+                    Careers
+                  </Link>
+
+                  <Link
                     to="/privacy-policy"
                     className="block px-3 py-2 text-sm hover:bg-gray-100"
                     onClick={() => {
@@ -315,3 +337,4 @@ export function Navbar({ isOpen, activeLink }: NavbarProps) {
     </nav>
   );
 }
+  
