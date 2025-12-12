@@ -115,7 +115,7 @@ export function ServicesGrid() {
             </CardContent>
           </Card>
         </div>
-      ))}
+      ))} 
     </div>
   );
 }
