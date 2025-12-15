@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 
@@ -25,6 +30,9 @@ import ApplyForm from "./pages/ApplyForm";
 
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboardPage from "@/pages/admin/AdminDashboard";
+import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
+import AdminUsersPage from "@/pages/admin/AdminUsers";
+
 
 function AppContent() {
   const location = useLocation();
@@ -53,9 +61,12 @@ function AppContent() {
           {/* Admin Auth */}
           <Route path="/admin/signin" element={<AdminSignIn />} />
 
-          {/* Admin Dashboard */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
+          {/* Protected Admin Routes */}
+          <Route element={<AdminProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboardPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+            </Route>
           </Route>
 
           <Route path="/portfolio" element={<Portfolio />} />
@@ -64,7 +75,10 @@ function AppContent() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route
+            path="/terms-and-conditions"
+            element={<TermsAndConditions />}
+          />
           <Route path="/careers" element={<Careers />} />
           <Route path="/apply/:jobId" element={<ApplyForm />} />
         </Routes>
