@@ -1,72 +1,120 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Mail, Lock } from 'lucide-react'
-import { getRoleByEmail } from '@/lib/mockUsers'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardDescription,
+} from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 export default function EmployeeLogin() {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-    setError(null)
-  }
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setError(null);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Frontend-only validation: prevent admin accounts from using employee login
-    const role = getRoleByEmail(form.email)
-    if (role !== 'employee') {
-      setError(role === 'admin' ? 'This appears to be an admin account — use Admin login.' : 'No employee account found for this email.')
-      return
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/api/v1/auth/login`,
+      form,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    const token = res.data?.token;
+
+    if (!token) {
+      setError("Login failed. Please try again.");
+      return;
     }
-    // Frontend indication only — real auth should verify employee role/server-side
-    console.log('Employee login payload:', form)
-  }
 
-  const ready = form.email.length > 0 && form.password.length > 0
+    // ✅ STORE ONLY TOKEN
+    localStorage.setItem("employeeToken", token);
+
+    // ❌ DO NOT STORE USER HERE
+    localStorage.removeItem("employeeUser");
+
+    navigate("/employee/dashboard", { replace: true });
+  } catch (err: any) {
+    setError(
+      err?.response?.data?.message ||
+        "Invalid email or password"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="w-full max-w-md">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mb-2 text-xl font-bold">Growcode Solution — Employee Login</div>
-            <CardDescription>Employee login only. Use your employee credentials to access dashboard.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm">Email</label>
-                <div className="relative mt-1">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <Input name="email" type="email" value={form.email} onChange={handleChange} className="pl-10" placeholder="you@company.com" required />
-                </div>
-              </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="text-xl font-bold">
+            Employee Login
+          </div>
+          <CardDescription>
+            Login with your employee credentials
+          </CardDescription>
+        </CardHeader>
 
-              <div>
-                <label className="text-sm">Password</label>
-                <div className="relative mt-1">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <Input name="password" type="password" value={form.password} onChange={handleChange} className="pl-10" required />
-                </div>
-              </div>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              name="email"
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
 
-              <Button type="submit" className="w-full" disabled={!ready}>Log In</Button>
-              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+            <Input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
 
-              <div className="text-center mt-2 flex justify-center gap-2">
-                <p className="text-sm text-gray-600">Don't have an employee account?</p>
-                <Link to="/employe" className="text-sm text-blue-600 hover:underline">Create account</Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </Button>
+
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
+          </form>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

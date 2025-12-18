@@ -1,6 +1,7 @@
-// src/pages/admin/AdminUsers.tsx
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+
 import {
   Table,
   TableHeader,
@@ -12,85 +13,72 @@ import {
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Pencil, Trash2 } from "lucide-react";
+import EditUserModal from "@/components/admin/EditUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 type User = {
   _id: string;
   name: string;
-  surname: string;
   email: string;
-  role: string;
+  role: "admin" | "employee";
   department: string;
   isActive: boolean;
 };
 
-type FilterType = "all" | "active" | "inactive";
-
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
+  const [editUser, setEditUser] = useState<User | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>("all");
 
   const token = localStorage.getItem("admin_token");
 
-  // 🔹 Fetch users
-  const fetchUsers = async () => {
-    if (!token) return;
-
+  /* ================= FETCH ALL USERS ================= */
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/v1/employee`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      setUsers(Array.isArray(res.data) ? res.data : res.data.data);
+      setUsers(res.data?.data ?? res.data ?? []);
     } catch (err) {
       console.error("Fetch users failed", err);
+      setUsers([]);
     }
-  };
+  }, [token]);
 
-  // 🔹 Toggle Active / Inactive
-  const toggleStatus = async (user: User) => {
-    if (!token) return;
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
+  /* ================= TOGGLE ACTIVE ================= */
+  const toggleStatus = async (u: User) => {
     try {
-      setLoadingId(user._id);
+      setLoadingId(u._id);
 
       await axios.put(
-        `${BASE_URL}/api/v1/employee/${user._id}`,
-        {
-          ...user,
-          isActive: !user.isActive,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${BASE_URL}/api/v1/employee/update/${u._id}`,
+        { isActive: !u.isActive },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       fetchUsers();
     } catch (err) {
-      console.error("Update user failed", err);
+      console.error("Update status failed", err);
     } finally {
       setLoadingId(null);
     }
   };
 
-  // 🔹 Delete user
+  /* ================= DELETE USER ================= */
   const deleteUser = async (id: string) => {
-    if (!token) return;
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!confirm("Delete this employee?")) return;
 
     try {
       setLoadingId(id);
 
-      await axios.delete(`${BASE_URL}/api/v1/employee/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.delete(`${BASE_URL}/api/v1/employee/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       fetchUsers();
@@ -101,42 +89,11 @@ export default function AdminUsers() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  // 🔹 Filter logic (NO API)
-  const filteredUsers = users.filter((u) => {
-    if (filter === "active") return u.isActive;
-    if (filter === "inactive") return !u.isActive;
-    return true;
-  });
-
+  /* ================= UI ================= */
   return (
     <Card>
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">Employees</h2>
-
-        {/* 🔹 FILTER BADGES */}
-        <div className="flex gap-2">
-          {(["all", "active", "inactive"] as FilterType[]).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-                filter === f
-                  ? "bg-slate-900 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {f === "all"
-                ? "All"
-                : f === "active"
-                ? "Active"
-                : "Inactive"}
-            </button>
-          ))}
-        </div>
+      <CardHeader className="font-semibold">
+        Employees ({users.length})
       </CardHeader>
 
       <CardContent className="overflow-x-auto">
@@ -152,45 +109,41 @@ export default function AdminUsers() {
           </TableHeader>
 
           <TableBody>
-            {filteredUsers.length === 0 ? (
+            {users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-slate-500">
-                  No users found
+                <TableCell
+                  colSpan={5}
+                  className="text-center text-sm text-muted-foreground"
+                >
+                  No employees found
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((u) => (
+              users.map((u) => (
                 <TableRow key={u._id}>
-                  <TableCell className="font-medium">
-                    {u.name} {u.surname}
-                  </TableCell>
-
+                  <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
+                  <TableCell>{u.role}</TableCell>
 
                   <TableCell>
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium">
-                      {u.role}
-                    </span>
-                  </TableCell>
-
-                  <TableCell>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
+                    <button
+                      disabled={loadingId === u._id}
+                      onClick={() => toggleStatus(u)}
+                      className={`px-2 py-1 rounded text-xs font-medium transition ${
                         u.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : "bg-red-100 text-red-700 hover:bg-red-200"
                       }`}
                     >
                       {u.isActive ? "Active" : "Inactive"}
-                    </span>
+                    </button>
                   </TableCell>
 
                   <TableCell className="flex justify-end gap-2">
                     <Button
                       size="icon"
                       variant="outline"
-                      disabled={loadingId === u._id}
-                      onClick={() => toggleStatus(u)}
+                      onClick={() => setEditUser(u)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -210,6 +163,14 @@ export default function AdminUsers() {
           </TableBody>
         </Table>
       </CardContent>
+
+      {editUser && (
+        <EditUserModal
+          user={editUser}
+          onClose={() => setEditUser(null)}
+          onSuccess={fetchUsers}
+        />
+      )}
     </Card>
   );
 }

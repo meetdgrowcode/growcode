@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-
 import {
   Card,
   CardHeader,
@@ -17,39 +16,33 @@ import {
   TableCell,
   TableHead,
 } from "@/components/ui/Table";
-
-import { Users, Activity, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
-/* ================= TYPES ================= */
-
 type User = {
   _id: string;
   name: string;
+  surname: string;
   email: string;
   isActive: boolean;
-  createdAt: string;
+  createdAt?: string;
 };
 
-/* ================= HELPERS ================= */
-
-// format date as DD/MM/YYYY
-const formatDate = (date: string): string => {
+const formatDate = (date?: string) => {
+  if (!date) return "-";
   const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(
+    d.getMonth() + 1
+  ).padStart(2, "0")}/${d.getFullYear()}`;
 };
 
-// check if date is today or yesterday
-const isTodayOrYesterday = (date: string): boolean => {
+const isTodayOrYesterday = (date?: string) => {
+  if (!date) return false;
   const d = new Date(date);
   const today = new Date();
   const yesterday = new Date();
-
   yesterday.setDate(today.getDate() - 1);
 
   return (
@@ -58,147 +51,106 @@ const isTodayOrYesterday = (date: string): boolean => {
   );
 };
 
-/* ================= COMPONENT ================= */
-
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  // ONLY ACTIVE USERS
-  const activeUsers = users.filter((u) => u.isActive);
-
-  // ACTIVE + ADDED TODAY OR YESTERDAY
-  const recentActiveUsers = users.filter(
-    (u) => u.isActive && isTodayOrYesterday(u.createdAt)
-  );
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("admin_token");
-
-      const res = await axios.get(`${BASE_URL}/api/v1/employee`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = Array.isArray(res.data)
-        ? res.data
-        : res.data?.data || [];
-
-      setUsers(data);
-    } catch (err) {
-      console.error("Failed to fetch users", err);
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const token = localStorage.getItem("admin_token");
 
   useEffect(() => {
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/v1/employee`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (isMounted) {
+          setUsers(res.data.data || res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch users", error);
+      }
+    };
+
     fetchUsers();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
+  const activeUsers = users.filter((u) => u.isActive);
+  const recentActiveUsers = activeUsers.filter((u) =>
+    isTodayOrYesterday(u.createdAt)
+  );
 
   return (
     <div className="space-y-8">
-      {/* ================= HEADER ================= */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">
-          Admin Dashboard
-        </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-xl font-semibold">Admin Dashboard</h1>
         <Button onClick={() => setShowCreate(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Employee 
+          <Plus className="mr-2 h-4 w-4" /> Add Employee
         </Button>
       </div>
 
-      {/* ================= STATS ================= */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-slate-500">Total Employee</p>
-            <p className="text-3xl font-semibold">{users.length}</p>
-          </div>
-          <Users className="h-6 w-6 text-slate-400" />
+      <div className="grid sm:grid-cols-3 gap-6">
+        <Card className="p-6">
+          <p>Total Employees</p>
+          <p className="text-3xl font-semibold">{users.length}</p>
         </Card>
 
-        <Card className="p-6 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-slate-500">Active Employee</p>
-            <p className="text-3xl font-semibold">{activeUsers.length}</p>
-          </div>
-          <Activity className="h-6 w-6 text-green-500" />
+        <Card className="p-6">
+          <p>Active Employees</p>
+          <p className="text-3xl font-semibold">{activeUsers.length}</p>
         </Card>
 
-        <Card className="p-6 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-slate-500">Inactive Employee</p>
-            <p className="text-3xl font-semibold">
-              {users.length - activeUsers.length}
-            </p>
-          </div>
-          <Users className="h-6 w-6 text-red-400" />
+        <Card className="p-6">
+          <p>Inactive Employees</p>
+          <p className="text-3xl font-semibold">
+            {users.length - activeUsers.length}
+          </p>
         </Card>
       </div>
 
-      {/* ================= RECENT ACTIVE USERS ================= */}
       <Card>
-        <CardHeader className="flex items-center justify-between">
-          <CardTitle>Recent Active Employee</CardTitle>
-          <span className="text-sm text-slate-500">
-            Today & Yesterday
-          </span>
+        <CardHeader>
+          <CardTitle>Recent Active Employees</CardTitle>
         </CardHeader>
 
         <CardContent className="p-0">
-          {loading ? (
-            <p className="p-6 text-sm text-slate-500">Loading employees...</p>
-          ) : recentActiveUsers.length === 0 ? (
-            <p className="p-6 text-sm text-slate-500">
-              No active employees added today or yesterday
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
 
-                <TableBody>
-                  {recentActiveUsers.slice(0, 5).map((u) => (
-                    <TableRow key={u._id}>
-                      <TableCell className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <img src="/logo.png" alt={u.name} />
-                        </Avatar>
-                        <span className="font-medium">{u.name}</span>
-                      </TableCell>
-
-                      <TableCell>{u.email}</TableCell>
-
-                      <TableCell className="text-slate-500">
-                        {formatDate(u.createdAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+            <TableBody>
+              {recentActiveUsers.map((u) => (
+                <TableRow key={u._id}>
+                  <TableCell className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <img src="/logo.png" />
+                    </Avatar>
+                    {u.name} {u.surname}
+                  </TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>{formatDate(u.createdAt)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* ================= CREATE USER MODAL ================= */}
       {showCreate && (
         <CreateUserModal
           onClose={() => setShowCreate(false)}
-          onSuccess={fetchUsers}
+          onSuccess={() => window.location.reload()}
         />
       )}
     </div>

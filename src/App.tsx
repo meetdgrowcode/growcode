@@ -15,8 +15,6 @@ import { About } from "@/pages/About";
 import { Services } from "@/pages/Services";
 import { Contact } from "@/pages/Contact";
 import { LifeAndCulture } from "./pages/LifeAndCulture";
-import EmployeeSignIn from "@/pages/EmployeeSignIn";
-import EmployeeLogin from "@/pages/EmployeeLogin";
 import AdminSignIn from "@/pages/AdminSignIn";
 import ServiceDetails from "@/pages/ServiceDetails";
 import Portfolio from "./pages/Portfolio";
@@ -33,13 +31,19 @@ import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
 import AdminUsersPage from "@/pages/admin/AdminUsers";
 
+// import EmployeeLayout from "@/layouts/EmployeeLayout";
+import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
+import EmployeeProtectedRoute from "@/routes/EmployeeProtectedRoute";
+import EmployeeLogin from "./pages/EmployeeLogin";
 
 function AppContent() {
   const location = useLocation();
   const { isOpen, activeLink } = useSelector((state: RootState) => state.nav);
 
-  // remove navbar + footer for admin routes
-  const hideLayout = location.pathname.startsWith("/admin");
+  // hide navbar + footer for admin & employee
+  const hideLayout =
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/employee");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -47,28 +51,33 @@ function AppContent() {
 
       <main className="flex-1">
         <Routes>
-          {/* Public Routes */}
+          {/* ================= PUBLIC ROUTES ================= */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:slug" element={<ServiceDetails />} />
           <Route path="/contact" element={<Contact />} />
 
-          {/* Employee */}
-          <Route path="/employee" element={<EmployeeSignIn />} />
+          {/* ✅ EMPLOYEE LOGIN (MUST BE BEFORE PROTECTED) */}
           <Route path="/employee/login" element={<EmployeeLogin />} />
 
-          {/* Admin Auth */}
+          {/* ================= EMPLOYEE PROTECTED ================= */}
+          <Route element={<EmployeeProtectedRoute />}>
+            <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          </Route>
+
+          {/* ================= ADMIN AUTH ================= */}
           <Route path="/admin/signin" element={<AdminSignIn />} />
 
-          {/* Protected Admin Routes */}
+          {/* ================= ADMIN PROTECTED ================= */}
           <Route element={<AdminProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
-                <Route path="users" element={<AdminUsersPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
             </Route>
           </Route>
 
+          {/* ================= OTHER PUBLIC ================= */}
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/portfolio/:slug" element={<PortfolioDetailPage />} />
           <Route path="/life-and-culture" element={<LifeAndCulture />} />
