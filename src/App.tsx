@@ -31,10 +31,13 @@ import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
 import AdminUsersPage from "@/pages/admin/AdminUsers";
 
-// import EmployeeLayout from "@/layouts/EmployeeLayout";
+
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
 import EmployeeProtectedRoute from "@/routes/EmployeeProtectedRoute";
 import EmployeeLogin from "./pages/EmployeeLogin";
+import EmployeeLayout from "./layouts/EmployeeLayout";
+import EmployeeTracker from "./pages/employee/EmployeeTracker";
+// import EmployeeShell from "./components/employee/EmployeeShell";
 
 function AppContent() {
   const location = useLocation();
@@ -63,7 +66,10 @@ function AppContent() {
 
           {/* ================= EMPLOYEE PROTECTED ================= */}
           <Route element={<EmployeeProtectedRoute />}>
-            <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+            <Route path="/employee" element={<EmployeeLayout />}>
+              <Route index element={<EmployeeDashboard />} />
+              <Route path="tracker" element={<EmployeeTracker />} />
+            </Route>
           </Route>
 
           {/* ================= ADMIN AUTH ================= */}

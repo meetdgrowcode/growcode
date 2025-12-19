@@ -1,63 +1,95 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Card, CardContent } from "@/components/ui/Card";
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+import { useState } from "react";
+import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 
-type Employee = {
-  name?: string;
-  email?: string;
-  role?: string;
-};
+/* ================= HELPERS ================= */
+function formatTime(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${h}h ${m}m`;
+}
 
+/* ================= COMPONENT ================= */
 export default function EmployeeDashboard() {
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
+  /**
+   * IMPORTANT:
+   * No useEffect here.
+   * These are initial placeholder values.
+   * When backend is connected, these will come from API.
+   */
 
-  const token = localStorage.getItem("employeeToken");
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(
-          `${BASE_URL}/api/v1/auth/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setEmployee(res.data);
-      } catch (error) {
-        console.log("Failed to load employee profile",error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [token]);
-
-  if (loading) {
-    return <div className="p-6">Loading...</div>;
-  }
+  const [todaySeconds] = useState<number>(5 * 3600 + 30 * 60); // 5h 30m
+  const [weekSeconds] = useState<number>(22 * 3600 + 15 * 60);
+  const [monthSeconds] = useState<number>(96 * 3600 + 40 * 60);
+  const [isWorking] = useState<boolean>(true);
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <h1 className="text-2xl font-bold">
-        Welcome, {employee?.name || employee?.email || "Employee"} 👋
-      </h1>
+    <div className="space-y-6">
+      {/* ================= HEADER ================= */}
+      <div>
+        <h1 className="text-xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
+          Overview of your work activity
+        </p>
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ================= STATS ================= */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Role</p>
-            <p className="text-xl font-semibold">
-              {employee?.role || "Employee"}
-            </p>
+          <CardHeader className="text-sm font-medium">
+            Today
+          </CardHeader>
+          <CardContent className="text-2xl font-bold">
+            {formatTime(todaySeconds)}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="text-sm font-medium">
+            This Week
+          </CardHeader>
+          <CardContent className="text-2xl font-bold">
+            {formatTime(weekSeconds)}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="text-sm font-medium">
+            This Month
+          </CardHeader>
+          <CardContent className="text-2xl font-bold">
+            {formatTime(monthSeconds)}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="text-sm font-medium">
+            Status
+          </CardHeader>
+          <CardContent>
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium ${
+                isWorking
+                  ? "bg-green-100 text-green-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {isWorking ? "Working" : "Idle"}
+            </span>
           </CardContent>
         </Card>
       </div>
+
+      {/* ================= INFO ================= */}
+      <Card>
+        <CardHeader className="font-semibold">
+          Productivity Insight
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Your working hours are calculated from the tracker.
+          Make sure to start and stop your tracker properly to
+          maintain accurate HR records.
+        </CardContent>
+      </Card>
     </div>
   );
 }
