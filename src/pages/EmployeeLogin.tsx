@@ -57,7 +57,7 @@ export default function EmployeeLogin() {
     // ❌ DO NOT STORE USER HERE
     localStorage.removeItem("employeeUser");
 
-    navigate("/employee/dashboard", { replace: true });
+    navigate("/employee", { replace: true });
   } catch (err: any) {
     setError(
       err?.response?.data?.message ||

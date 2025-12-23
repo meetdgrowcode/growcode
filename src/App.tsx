@@ -31,13 +31,11 @@ import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
 import AdminUsersPage from "@/pages/admin/AdminUsers";
 
-
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
 import EmployeeProtectedRoute from "@/routes/EmployeeProtectedRoute";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import EmployeeLayout from "./layouts/EmployeeLayout";
 import EmployeeTracker from "./pages/employee/EmployeeTracker";
-// import EmployeeShell from "./components/employee/EmployeeShell";
 
 function AppContent() {
   const location = useLocation();

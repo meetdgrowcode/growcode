@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import {
   Card,
   CardHeader,
@@ -13,167 +14,233 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/Table";
-import { Play, Square } from "lucide-react";
+import { Play, Pause, Square } from "lucide-react";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 /* ================= TYPES ================= */
-type TrackerEntry = {
+type Status = "IDLE" | "WORKING" | "BREAK" | "COMPLETED";
+
+type LogEntry = {
   id: string;
-  startTime: string;
-  endTime?: string;
-  duration: string;
-  status: "Running" | "Completed";
+  action: string;
+  time: string;
 };
 
-/* ================= HELPERS ================= */
-function formatTime(seconds: number) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+/* ================= CONSTANTS ================= */
+const ACTIONS = {
+  CHECK_IN: "CHECK_IN",
+  BREAK_START: "BREAK_START",
+  BREAK_END: "BREAK_END",
+  CHECK_OUT: "CHECK_OUT",
+} as const;
 
-  return `${h.toString().padStart(2, "0")}:${m
-    .toString()
-    .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
-
-/* ================= COMPONENT ================= */
 export default function EmployeeTracker() {
-  const [running, setRunning] = useState(false);
+  const [status, setStatus] = useState<Status>("IDLE");
   const [seconds, setSeconds] = useState(0);
-  const [entries, setEntries] = useState<TrackerEntry[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const timerRef = useRef<number | null>(null);
+  const token = localStorage.getItem("employeeToken");
+
+  /* ================= FORMAT ================= */
+  const formatTime = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  /* ================= LOAD FROM STORAGE ================= */
+  useEffect(() => {
+    const saved = localStorage.getItem("employee_tracker_state");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setStatus(parsed.status);
+      setSeconds(parsed.seconds);
+      setLogs(parsed.logs || []);
+    }
+  }, []);
+
+  /* ================= SAVE TO STORAGE ================= */
+  useEffect(() => {
+    localStorage.setItem(
+      "employee_tracker_state",
+      JSON.stringify({ status, seconds, logs })
+    );
+  }, [status, seconds, logs]);
 
   /* ================= TIMER ================= */
   useEffect(() => {
-    let timer: number | undefined;
-
-    if (running) {
-      timer = window.setInterval(() => {
+    if (status === "WORKING") {
+      timerRef.current = window.setInterval(() => {
         setSeconds((s) => s + 1);
       }, 1000);
     }
 
     return () => {
-      if (timer) window.clearInterval(timer);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
-  }, [running]);
+  }, [status]);
 
-  /* ================= HANDLERS ================= */
-  const startTracker = () => {
-    setRunning(true);
-    setSeconds(0);
+  /* ================= API ================= */
+  const markAttendance = async (action: string) => {
+    if (!token) return;
 
-    setEntries((prev) => [
+    setLoading(true);
+    try {
+      await axios.post(
+        `${BASE_URL}/api/v1/attendance/Attendance`,
+        { action },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } catch (err: any) {
+      console.warn("Backend:", err?.response?.data?.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= LOG ================= */
+  const addLog = (action: string) => {
+    setLogs((prev) => [
       {
         id: Date.now().toString(),
-        startTime: new Date().toLocaleTimeString(),
-        duration: "Running",
-        status: "Running",
+        action,
+        time: new Date().toLocaleTimeString(),
       },
       ...prev,
     ]);
   };
 
-  const stopTracker = () => {
-    setRunning(false);
+  /* ================= ACTIONS ================= */
+  const startWork = async () => {
+    await markAttendance(ACTIONS.CHECK_IN);
+    setStatus("WORKING");
+    addLog("Work Started");
+  };
 
-    setEntries((prev) =>
-      prev.map((e, i) =>
-        i === 0
-          ? {
-              ...e,
-              endTime: new Date().toLocaleTimeString(),
-              duration: formatTime(seconds),
-              status: "Completed",
-            }
-          : e
-      )
-    );
+  const pauseWork = async () => {
+    await markAttendance(ACTIONS.BREAK_START);
+    setStatus("BREAK");
+    addLog("Break Started");
+  };
+
+  const resumeWork = async () => {
+    await markAttendance(ACTIONS.BREAK_END);
+    setStatus("WORKING");
+    addLog("Break Ended");
+  };
+
+  const stopWork = async () => {
+    await markAttendance(ACTIONS.CHECK_OUT);
+    setStatus("COMPLETED");
+    addLog("Work Completed");
+    localStorage.removeItem("employee_tracker_state");
   };
 
   /* ================= UI ================= */
   return (
     <div className="space-y-6">
-      {/* ================= HEADER ================= */}
+      {/* TRACKER CARD */}
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold">Work Tracker</h2>
-            <p className="text-sm text-muted-foreground">
-              Track your daily working hours
-            </p>
+        <CardHeader>
+          <h2 className="text-lg font-semibold">Work Tracker</h2>
+          <p className="text-sm text-muted-foreground">
+            Track today’s working hours
+          </p>
+        </CardHeader>
+
+        <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          {/* TIMER */}
+          <div className="text-3xl font-mono font-bold text-center sm:text-left">
+            {formatTime(seconds)}
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-xl font-mono font-semibold">
-              {formatTime(seconds)}
-            </div>
-
-            {!running ? (
-              <Button onClick={startTracker}>
+          {/* BUTTONS */}
+          <div className="flex flex-wrap justify-center gap-3">
+            {status === "IDLE" && (
+              <Button onClick={startWork} disabled={loading}>
                 <Play className="mr-2 h-4 w-4" />
                 Start
               </Button>
-            ) : (
-              <Button variant="destructive" onClick={stopTracker}>
-                <Square className="mr-2 h-4 w-4" />
-                Stop
+            )}
+
+            {status === "WORKING" && (
+              <>
+                <Button variant="secondary" onClick={pauseWork}>
+                  <Pause className="mr-2 h-4 w-4" />
+                  Pause
+                </Button>
+                <Button variant="destructive" onClick={stopWork}>
+                  <Square className="mr-2 h-4 w-4" />
+                  Stop
+                </Button>
+              </>
+            )}
+
+            {status === "BREAK" && (
+              <Button onClick={resumeWork}>
+                <Play className="mr-2 h-4 w-4" />
+                Resume
               </Button>
             )}
+
+            {status === "COMPLETED" && (
+              <span className="text-sm text-muted-foreground">
+                Work completed for today
+              </span>
+            )}
           </div>
-        </CardHeader>
+        </CardContent>
       </Card>
 
-      {/* ================= TABLE ================= */}
+      {/* ACTIVITY TABLE */}
       <Card>
         <CardHeader className="font-semibold">
           Today’s Activity
         </CardHeader>
 
-        {/* IMPORTANT: p-0 + wrapper */}
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto">
-            <Table className="min-w-[640px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Start Time</TableHead>
-                  <TableHead>End Time</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Action</TableHead>
+                <TableHead>Time</TableHead>
+              </TableRow>
+            </TableHeader>
 
-              <TableBody>
-                {entries.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-sm text-muted-foreground"
-                    >
-                      No tracking data yet
-                    </TableCell>
+            <TableBody>
+              {logs.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={2}
+                    className="text-center text-sm text-muted-foreground"
+                  >
+                    No activity yet
+                  </TableCell>
+                </TableRow>
+              ) : (
+                logs.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell>{l.action}</TableCell>
+                    <TableCell>{l.time}</TableCell>
                   </TableRow>
-                ) : (
-                  entries.map((e) => (
-                    <TableRow key={e.id}>
-                      <TableCell>{e.startTime}</TableCell>
-                      <TableCell>{e.endTime ?? "-"}</TableCell>
-                      <TableCell>{e.duration}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            e.status === "Running"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-green-100 text-green-700"
-                          }`}
-                        >
-                          {e.status}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
