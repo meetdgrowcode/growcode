@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-} from "@/components/ui/Card";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avtar";
 import {
@@ -21,6 +16,8 @@ import CreateUserModal from "@/components/admin/CreateUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
+/* ================= TYPES ================= */
+
 type User = {
   _id: string;
   name: string;
@@ -29,6 +26,19 @@ type User = {
   isActive: boolean;
   createdAt?: string;
 };
+
+type Leave = {
+  _id: string;
+  date: string;
+  toDate: string;
+  leaveReason: string;
+  employeeId: {
+    name?: string;
+    email?: string;
+  } | null;
+};
+
+/* ================= HELPERS ================= */
 
 const formatDate = (date?: string) => {
   if (!date) return "-";
@@ -51,12 +61,16 @@ const isTodayOrYesterday = (date?: string) => {
   );
 };
 
+/* ================= COMPONENT ================= */
+
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [pendingLeaves, setPendingLeaves] = useState<Leave[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
   const token = localStorage.getItem("admin_token");
 
+  /* ================= FETCH EMPLOYEES ================= */
   useEffect(() => {
     let isMounted = true;
 
@@ -75,19 +89,47 @@ export default function AdminDashboardPage() {
     };
 
     fetchUsers();
-
     return () => {
       isMounted = false;
     };
   }, [token]);
 
+  /* ================= FETCH PENDING LEAVES ================= */
+  const fetchPendingLeaves = async () => {
+    const res = await axios.get(
+      `${BASE_URL}/api/v1/attendance/admin/pending-leaves`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setPendingLeaves(res.data.data);
+  };
+
+  useEffect(() => {
+    fetchPendingLeaves();
+  }, []);
+
+  /* ================= LEAVE ACTION ================= */
+  const handleLeaveAction = async (
+    id: string,
+    action: "approve" | "reject"
+  ) => {
+    await axios.put(
+      `${BASE_URL}/api/v1/attendance/admin/leave-action/${id}`,
+      { action },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    fetchPendingLeaves();
+  };
+
+  /* ================= CALCULATIONS ================= */
   const activeUsers = users.filter((u) => u.isActive);
   const recentActiveUsers = activeUsers.filter((u) =>
     isTodayOrYesterday(u.createdAt)
   );
 
+  /* ================= UI ================= */
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      {/* ================= HEADER ================= */}
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-semibold">Admin Dashboard</h1>
         <Button onClick={() => setShowCreate(true)}>
@@ -95,6 +137,7 @@ export default function AdminDashboardPage() {
         </Button>
       </div>
 
+      {/* ================= STATS ================= */}
       <div className="grid sm:grid-cols-3 gap-6">
         <Card className="p-6">
           <p>Total Employees</p>
@@ -114,6 +157,7 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
+      {/* ================= RECENT EMPLOYEES ================= */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Active Employees</CardTitle>
@@ -146,6 +190,85 @@ export default function AdminDashboardPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* ================= LEAVE APPROVAL ================= */}
+      <Card>
+  <CardHeader>
+    <CardTitle>Pending Leave Requests</CardTitle>
+  </CardHeader>
+
+  <CardContent className="p-0">
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Employee</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>From</TableHead>
+          <TableHead>To</TableHead>
+          <TableHead>Reason</TableHead>
+          <TableHead className="text-right">Action</TableHead>
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {pendingLeaves.length === 0 ? (
+          <TableRow>
+            <TableCell
+              colSpan={6}
+              className="text-center text-sm text-muted-foreground"
+            >
+              No pending leave requests
+            </TableCell>
+          </TableRow>
+        ) : (
+          pendingLeaves.map((leave) => (
+            <TableRow key={leave._id}>
+              <TableCell className="font-medium">
+                {leave.employeeId?.name ?? "Deleted Employee"}
+              </TableCell>
+
+              <TableCell>
+                {leave.employeeId?.email ?? "-"}
+              </TableCell>
+
+              <TableCell>{leave.date}</TableCell>
+
+              <TableCell>{leave.toDate}</TableCell>
+
+              <TableCell className="max-w-[220px] truncate">
+                {leave.leaveReason}
+              </TableCell>
+
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      handleLeaveAction(leave._id, "approve")
+                    }
+                  >
+                    Approve
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() =>
+                      handleLeaveAction(leave._id, "reject")
+                    }
+                  >
+                    Reject
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  </CardContent>
+</Card>
+
 
       {showCreate && (
         <CreateUserModal

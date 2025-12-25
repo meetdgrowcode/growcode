@@ -1,125 +1,94 @@
 import { useState } from "react";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { CalendarDays, FileText } from "lucide-react";
 
-type Props = {
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+export default function ApplyLeaveModal({
+  open,
+  onClose,
+  onSuccess,
+}: {
   open: boolean;
   onClose: () => void;
-};
+  onSuccess: () => void;
+}) {
+  const [date, setDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [leaveReason, setLeaveReason] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default function ApplyLeaveModal({ open, onClose }: Props) {
-  const [type, setType] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [reason, setReason] = useState("");
+  const token = localStorage.getItem("employeeToken");
 
-  const handleSubmit = () => {
-    if (!type || !from || !to) {
-      alert("Please fill all required fields");
+  const submitLeave = async () => {
+    if (!date || !toDate || !leaveReason) {
+      alert("All fields are required");
       return;
     }
 
-    console.log({ type, from, to, reason });
-    onClose();
+    try {
+      setLoading(true);
+      await axios.post(
+        `${BASE_URL}/api/v1/attendance/attendance/apply-leave`,
+        { date, toDate, leaveReason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to apply leave");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg rounded-xl overflow-visible">
-        {/* HEADER */}
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-xl font-semibold">
-            Apply for Leave
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Submit your leave request for approval
-          </p>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Apply Leave</DialogTitle>
         </DialogHeader>
 
-        {/* BODY */}
-        <div className="mt-6 space-y-6">
-          {/* Leave Type */}
-          <div className="space-y-2">
-            <Label>Leave Type</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Select leave type" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="Casual">Casual Leave</SelectItem>
-                <SelectItem value="Sick">Sick Leave</SelectItem>
-                <SelectItem value="Paid">Paid Leave</SelectItem>
-                <SelectItem value="Unpaid">Unpaid Leave</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-4">
+          <div>
+            <Label>From Date</Label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>From Date</Label>
-              <div className="relative">
-                <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-10 h-11"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>To Date</Label>
-              <div className="relative">
-                <CalendarDays className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-10 h-11"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
-              </div>
-            </div>
+          <div>
+            <Label>To Date</Label>
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
           </div>
 
-          {/* Reason */}
-          <div className="space-y-2">
-            <Label>Reason (optional)</Label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Brief reason for leave"
-                className="pl-10 h-11"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-              />
-            </div>
+          <div>
+            <Label>Reason</Label>
+            <Input value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} />
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="mt-8 flex justify-end gap-3 border-t pt-4">
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Submit Request</Button>
-        </div>
+          <Button onClick={submitLeave} disabled={loading}>
+            {loading ? "Submitting..." : "Submit"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
