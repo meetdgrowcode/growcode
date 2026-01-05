@@ -36,12 +36,14 @@ import EmployeeProtectedRoute from "@/routes/EmployeeProtectedRoute";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import EmployeeLayout from "./layouts/EmployeeLayout";
 import EmployeeTracker from "./pages/employee/EmployeeTracker";
+import ProfileSettings from "./pages/employee/ProfileSettings";
+import TeamTrackerPage from "./pages/admin/TeamTrackerPage";
+import EmployeeDetailPage from "./pages/admin/EmployeeDetailPage";  // ← admin folder માં રાખ
 
 function AppContent() {
   const location = useLocation();
   const { isOpen, activeLink } = useSelector((state: RootState) => state.nav);
 
-  // hide navbar + footer for admin & employee
   const hideLayout =
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/employee");
@@ -59,7 +61,7 @@ function AppContent() {
           <Route path="/services/:slug" element={<ServiceDetails />} />
           <Route path="/contact" element={<Contact />} />
 
-          {/* ✅ EMPLOYEE LOGIN (MUST BE BEFORE PROTECTED) */}
+          {/* ✅ EMPLOYEE LOGIN */}
           <Route path="/employee/login" element={<EmployeeLogin />} />
 
           {/* ================= EMPLOYEE PROTECTED ================= */}
@@ -67,6 +69,7 @@ function AppContent() {
             <Route path="/employee" element={<EmployeeLayout />}>
               <Route index element={<EmployeeDashboard />} />
               <Route path="tracker" element={<EmployeeTracker />} />
+              <Route path="settings" element={<ProfileSettings />} />
             </Route>
           </Route>
 
@@ -78,6 +81,9 @@ function AppContent() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<AdminUsersPage />} />
+              <Route path="tracker" element={<TeamTrackerPage />} />
+              {/* 👈 અહીં add કર્યું Employee Detail Page */}
+              <Route path="employee/:id" element={<EmployeeDetailPage />} />
             </Route>
           </Route>
 
@@ -88,10 +94,7 @@ function AppContent() {
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route
-            path="/terms-and-conditions"
-            element={<TermsAndConditions />}
-          />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/apply/:jobId" element={<ApplyForm />} />
         </Routes>

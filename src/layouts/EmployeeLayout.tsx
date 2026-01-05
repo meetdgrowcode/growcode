@@ -8,14 +8,21 @@ import {
   LogOut,
   Bell,
   Search,
-  X,
 } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/Dialog"; // Shadcn Dialog import
 
-import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avtar";
-import type { JSX } from "react/jsx-runtime";
+/* ================= TYPES ================= */
+type User = {
+  name: string;
+  email: string;
+  profilePic?: string;
+};
 
-/* ================= NAV ================= */
 type NavItem = {
   key: string;
   label: string;
@@ -44,296 +51,207 @@ const NAV: NavItem[] = [
   },
 ];
 
-export default function EmployeeLayout(): JSX.Element {
-  const [open, setOpen] = useState<boolean>(false); // mobile drawer
-  const [collapsed, setCollapsed] = useState<boolean>(false); // desktop collapse
-
+export default function EmployeeLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* ================= LOAD COLLAPSE STATE ================= */
+  const [collapsed, setCollapsed] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Define BASE_URL safely
+  const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+
+  /* ===== LOAD USER FROM LOCALSTORAGE ===== */
   useEffect(() => {
-    try {
-      const v = localStorage.getItem("employee_sidebar_collapsed");
-      if (v === "1") setCollapsed(true);
-    } catch (error){
-      console.log("Failed to save sidebar status",error)
+    const stored = localStorage.getItem("employeeUser");
+    if (stored) {
+      try {
+        const parsedUser = JSON.parse(stored);
+        setUser(parsedUser);
+      } catch (err) {
+        console.error("Failed to parse user from localStorage");
+      }
     }
   }, []);
 
-  /* ================= SAVE COLLAPSE STATE ================= */
+  // Listen for profile updates from settings page
   useEffect(() => {
-    try {
-      localStorage.setItem("employee_sidebar_collapsed", collapsed ? "1" : "0");
-    } catch(error){
-      console.error("Failed to save sidebar state:", error);
-    }
-  }, [collapsed]);
+    const handleProfileUpdate = () => {
+      const stored = localStorage.getItem("employeeUser");
+      if (stored) {
+        try {
+          setUser(JSON.parse(stored));
+        } catch (err) {
+          console.error("Failed to update user from event");
+        }
+      }
+    };
 
-  /* ================= AUTH GUARD ================= */
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+    return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
+  }, []);
+
+  /* ===== AUTH GUARD ===== */
   useEffect(() => {
-    const token = localStorage.getItem("employeeToken");
-    if (!token && location.pathname !== "/employee/login") {
+    if (!localStorage.getItem("employeeToken")) {
       navigate("/employee/login");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [navigate]);
 
-  /* ================= USER ================= */
-  let user: any = null;
-  const rawUser = localStorage.getItem("employeeUser");
-
-  if (rawUser && rawUser !== "undefined") {
-    try {
-      user = JSON.parse(rawUser);
-    } catch {
-      user = null;
-    }
-  }
-
-  /* ================= LOGOUT ================= */
-  const handleLogout = (): void => {
+  const logout = () => {
     localStorage.removeItem("employeeToken");
     localStorage.removeItem("employeeUser");
     navigate("/employee/login");
   };
 
-  /* ================= NAV LINKS ================= */
-  function NavLinks(props: { onClick?: () => void }): JSX.Element {
-    const { onClick } = props;
+  /* ===== GET INITIALS FROM NAME ===== */
+  const getInitials = (name: string) => {
+    const names = name.trim().split(" ");
+    const first = names[0]?.[0] || "";
+    const last = names.length > 1 ? names[names.length - 1]?.[0] : "";
+    return (first + last).toUpperCase() || "U";
+  };
 
-    return (
-      <nav className="mt-6 flex flex-col gap-1">
-        {NAV.map((n) => {
-          const isActive = location.pathname === n.to;
-
-          return (
-            <Link
-              key={n.key}
-              to={n.to}
-              onClick={onClick}
-              title={collapsed ? n.label : undefined}
-              className={
-                (isActive
-                  ? "bg-sky-50 text-sky-700 ring-1 ring-sky-100"
-                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900") +
-                " group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
-              }
-            >
-              <span
-                className={
-                  (isActive ? "text-sky-600" : "text-slate-400") +
-                  " group-hover:text-slate-700"
-                }
-              >
-                {n.icon}
-              </span>
-
-              {!collapsed && <span className="truncate">{n.label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-    );
-  }
+  const profileImageUrl = user?.profilePic ? `${BASE_URL}${user.profilePic}` : null;
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50">
       {/* ================= SIDEBAR ================= */}
       <aside
-        className={
-          "hidden md:flex md:flex-col border-r border-slate-100 bg-white transition-all duration-200 " +
-          (collapsed ? "md:w-20" : "md:w-72")
-        }
+        className={`hidden md:flex flex-col border-r bg-white transition-all duration-200 ${
+          collapsed ? "w-20" : "w-72"
+        }`}
       >
-        {/* TOP */}
-        <div className="flex items-center justify-between px-3 py-3">
-          {collapsed ? (
-            <button
-              aria-label="Expand sidebar"
-              onClick={() => setCollapsed(false)}
-              className="rounded p-2 hover:bg-slate-100"
-              title="Expand"
-            >
-              <IconMenu className="h-5 w-5 text-slate-600" />
-            </button>
-          ) : (
-            <>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                  G
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">GrowCode</div>
-                  <div className="text-xs text-slate-500">Employee panel</div>
-                </div>
+        {/* TOP BAR */}
+        <div className="h-16 flex items-center justify-between px-4 border-b">
+          {!collapsed && (
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-9 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                G
               </div>
-
-              <button
-                aria-label="Collapse sidebar"
-                onClick={() => setCollapsed(true)}
-                className="rounded p-2 hover:bg-slate-100"
-                title="Collapse"
-              >
-                <IconMenu className="h-5 w-5 text-slate-600" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* NAV */}
-        <div className="px-2">
-          <NavLinks />
-        </div>
-
-        {/* BOTTOM */}
-        <div className="mt-auto px-2 py-4">
-          {collapsed ? (
-            <div className="flex flex-col items-center">
-              <button
-                aria-label="Logout"
-                onClick={handleLogout}
-                className="rounded-md p-2 hover:bg-red-50 text-red-600"
-                title="Logout"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
-                <img src="/logo.png" alt="Employee" />
-              </Avatar>
-
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {user?.name || "Employee"}
+              <div>
+                <div className="text-sm font-semibold leading-tight">
+                  GrowCode
                 </div>
-                <div className="text-xs text-slate-500">
-                  {user?.email || ""}
-                </div>
+                <div className="text-xs text-slate-500">Employee Panel</div>
               </div>
-
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                className="text-red-600 p-2"
-                title="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
             </div>
           )}
+
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2 rounded-md hover:bg-slate-100"
+          >
+            <IconMenu className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* NAVIGATION */}
+        <div className="flex-1 px-2 pt-2">
+          {NAV.map((item) => {
+            const active = location.pathname === item.to;
+            return (
+              <Link
+                key={item.key}
+                to={item.to}
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+                  active
+                    ? "bg-sky-100 text-sky-700"
+                    : "text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                {item.icon}
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* LOGOUT */}
+        <div className="border-t p-3">
+          <button
+            onClick={logout}
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-5 w-5" />
+            {!collapsed && <span>Logout</span>}
+          </button>
         </div>
       </aside>
 
-      {/* ================= MAIN ================= */}
+      {/* ================= MAIN CONTENT ================= */}
       <div className="flex flex-1 flex-col">
-        {/* Mobile Topbar */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b px-4 py-3">
-          <button onClick={() => setOpen(true)} className="p-2 rounded-md">
-            <IconMenu className="h-5 w-5" />
-          </button>
-
-          <div className="font-semibold">GrowCode Employee</div>
-
-          <button className="p-2 rounded-md">
-            <Bell className="h-5 w-5" />
-          </button>
-        </header>
-
-        {/* Mobile Drawer */}
-        {open && (
-          <div className="fixed inset-0 z-40 flex">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setOpen(false)}
-            />
-
-            <div className="relative z-50 w-72 h-full bg-white shadow-xl p-4 flex flex-col">
-              <div className="flex items-center justify-between border-b pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                    G
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">GrowCode</div>
-                    <div className="text-xs text-slate-500">Employee</div>
-                  </div>
-                </div>
-
-                <button onClick={() => setOpen(false)}>
-                  <X className="h-5 w-5 text-slate-600" />
-                </button>
-              </div>
-
-              <div className="mt-4 flex-1 overflow-y-auto">
-                <NavLinks onClick={() => setOpen(false)} />
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <img src="/logo.png" alt="Employee" />
-                  </Avatar>
-
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">
-                      {user?.name || "Employee"}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {user?.email || ""}
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={() => {
-                      setOpen(false);
-                      handleLogout();
-                    }}
-                    variant="ghost"
-                    className="text-red-600 p-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Desktop Header */}
-        <div className="hidden md:flex items-center justify-between border-b bg-white px-6 py-4">
+        {/* HEADER */}
+        <header className="flex items-center justify-between border-b bg-white px-6 py-4">
           <div>
-            <h2 className="text-base font-semibold leading-tight">
-              Employee dashboard
+            <h2 className="text-lg font-semibold">
+              Welcome, {user?.name || "Employee"}
             </h2>
-            <p className="text-xs text-slate-500">Overview of your activity</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 border px-3 py-1 rounded-md bg-white">
+            <div className="hidden lg:flex items-center gap-2 border px-3 py-1 rounded-md">
               <Search className="h-4 w-4 text-slate-400" />
               <input
                 placeholder="Search..."
-                className="bg-transparent text-sm outline-none w-56"
+                className="bg-transparent outline-none text-sm w-48"
               />
             </div>
 
-            <Bell className="h-5 w-5 text-slate-600" />
-            <Avatar className="h-8 w-8">
-              <img src="/logo.png" alt="Employee" />
-            </Avatar>
-          </div>
-        </div>
+            <button className="p-2 rounded-md hover:bg-slate-100">
+              <Bell className="h-5 w-5 text-slate-600" />
+            </button>
 
-        {/* Page Content */}
-        <main
-          className={
-            "flex-1 overflow-y-auto p-4 md:p-8 transition-all duration-200 " +
-            (collapsed ? "md:pl-6" : "md:pl-8")
-          }
-        >
+            {/* Clickable Avatar with Lightbox */}
+            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+              <DialogTrigger asChild>
+                <button className="focus:outline-none">
+                  <Avatar
+                    className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-transparent hover:ring-sky-400 transition-all duration-200"
+                  >
+                    {profileImageUrl ? (
+                      <img
+                        src={profileImageUrl}
+                        alt={user?.name}
+                        className="h-full w-full rounded-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                          (e.target as HTMLImageElement).parentElement!.textContent =
+                            getInitials(user?.name || "U");
+                        }}
+                      />
+                    ) : (
+                      getInitials(user?.name || "U")
+                    )}
+                  </Avatar>
+                </button>
+              </DialogTrigger>
+
+              {/* Lightbox (Moti Image) */}
+              <DialogContent className="max-w-4xl border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
+                <div className="relative w-full max-h-[90vh]">
+                  {profileImageUrl && (
+                    <img
+                      src={profileImageUrl}
+                      alt={user?.name}
+                      className="max-h-[90vh] max-w-full rounded-xl shadow-2xl object-contain mx-auto"
+                    />
+                  )}
+                  <button
+                    onClick={() => setLightboxOpen(false)}
+                    className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 text-gray-800 shadow-lg text-xl font-bold"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </header>
+
+        {/* CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
           <Outlet />
         </main>
       </div>

@@ -5,16 +5,16 @@ import {
   Menu as IconMenu,
   Home,
   Users,
-  Layers,
   Settings,
   LogOut,
   Bell,
   Search,
   X,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avtar";
+import { Avatar } from "@/components/ui/Avatar";
 import type { JSX } from "react/jsx-runtime";
 
 type NavItem = {
@@ -27,7 +27,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { key: "home", label: "Overview", to: "/admin", icon: <Home className="h-5 w-5" /> },
   { key: "users", label: "Users", to: "/admin/users", icon: <Users className="h-5 w-5" /> },
-  { key: "projects", label: "Projects", to: "/admin/projects", icon: <Layers className="h-5 w-5" /> },
+  { key: "tracker", label: "Tracker", to: "/admin/tracker", icon: <Clock className="h-5 w-5" /> }, // ← New Tracker link with Clock icon
   { key: "settings", label: "Settings", to: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
