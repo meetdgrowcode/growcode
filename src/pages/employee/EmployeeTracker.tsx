@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useRef} from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -30,60 +30,61 @@ export default function EmployeeTracker() {
   const [displaySeconds, setDisplaySeconds] = useState(0);
   const [baseSeconds, setBaseSeconds] = useState(0);
   const [lastSyncTime, setLastSyncTime] = useState(() => Date.now());
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<[]>([]);
 
   const [selectedProject, setSelectedProject] = useState("");
   const [currentTask, setCurrentTask] = useState("");
   const [error, setError] = useState("");
+  const lastActivityRef = useRef(Date.now());
 
-  const [idleMinutes, setIdleMinutes] = useState(0); // 🔥 ADMIN VALUE
+  const [idleMinutes, setIdleMinutes] = useState(0); // ← API થી આવશે
 
   const token = localStorage.getItem("employeeToken");
 
-  /* ================= FETCH IDLE MINUTES (ONCE) ================= */
-  useEffect(() => {
-    if (!token) return;
+ 
+/* ================= FETCH IDLE MINUTES FROM API ================= */
+useEffect(() => {
+  if (!token) return;
 
-    const fetchIdleLimit = async () => {
-      try {
-        const res = await axios.get(
-          `${BASE_URL}/api/v1/admin/settings/idle-limit`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+  const fetchIdleLimit = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const minutes = Number(res.data.idleLimitMinutes);
+      setIdleMinutes(minutes > 0 ? minutes : 0);
+    } catch (err) {
+      console.error("Failed to fetch idle limit", err);
+      setIdleMinutes(0);
+    }
+  };
+  
 
-        if (typeof res.data?.idleMinutes === "number") {
-          setIdleMinutes(res.data.idleMinutes);
-        }
-      } catch {
-        setIdleMinutes(0); // fallback = no idle
-      }
+  fetchIdleLimit();
+}, [token]);
+
+  /* ================= SECRET AUTO-PAUSE (API CONTROLLED) ================= */
+useEffect(() => {
+    if (status !== "RUNNING" || idleMinutes === 0) return;
+
+    const resetActivity = () => {
+      lastActivityRef.current = Date.now(); // ← ref update
     };
 
-    fetchIdleLimit();
-  }, [token]);
+    const checkIdle = async () => {
+      const idleTimeMs = Date.now() - lastActivityRef.current;
+      const idleLimitMs = idleMinutes * 60 * 1000;
 
-  /* ================= ACTIVITY REPORT (ONLY IF ENABLED) ================= */
-  useEffect(() => {
-    if (status !== "RUNNING" || idleMinutes <= 0 || !token) return;
-
-    let throttle: any = null;
-
-    const reportActivity = () => {
-      if (throttle) return;
-
-      throttle = setTimeout(async () => {
+      if (idleTimeMs >= idleLimitMs) {
         try {
-          await axios.post(
-            `${BASE_URL}/api/v1/attendance/tracker/activity`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-        } catch {
-          // silent
-        } finally {
-          throttle = null;
+          await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          loadTodayData(); // UI refresh
+        } catch (err) {
+          console.error("Secret auto-stop failed", err);
         }
-      }, 5000); // max 1 call per 5 sec
+      }
     };
 
     const events = [
@@ -92,25 +93,36 @@ export default function EmployeeTracker() {
       "keydown",
       "scroll",
       "touchstart",
+      "click",
+      "wheel",
     ];
 
-    events.forEach((e) => window.addEventListener(e, reportActivity));
+    events.forEach((e) => window.addEventListener(e, resetActivity, { passive: true }));
+
+    const interval = setInterval(checkIdle, 5000); // 5 sec માં check (testing માટે fast)
 
     return () => {
-      events.forEach((e) => window.removeEventListener(e, reportActivity));
-      if (throttle) clearTimeout(throttle);
+      events.forEach((e) => window.removeEventListener(e, resetActivity));
+      clearInterval(interval);
     };
   }, [status, idleMinutes, token]);
 
   /* ================= LOAD TODAY DATA ================= */
   const loadTodayData = async () => {
-    if (!token) return;
+    if (!token) {
+      setStatus("STOPPED");
+      setDisplaySeconds(0);
+      setBaseSeconds(0);
+      setSessions([]);
+      setSelectedProject("");
+      setCurrentTask("");
+      return;
+    }
 
     try {
-      const res = await axios.get(
-        `${BASE_URL}/api/v1/attendance/today-status`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.get(`${BASE_URL}/api/v1/attendance/today-status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (res.data.success) {
         const {
@@ -119,9 +131,7 @@ export default function EmployeeTracker() {
           sessions: backendSessions = [],
         } = res.data;
 
-        const newStatus: Status =
-          backendStatus === "WORKING" ? "RUNNING" : "STOPPED";
-
+        const newStatus: Status = backendStatus === "WORKING" ? "RUNNING" : "STOPPED";
         const syncedSeconds = Math.floor(totalMs / 1000);
 
         setStatus(newStatus);
@@ -131,12 +141,12 @@ export default function EmployeeTracker() {
         setSessions(backendSessions);
 
         if (backendSessions.length > 0) {
-          setCurrentTask(
-            backendSessions[backendSessions.length - 1]?.taskName || ""
-          );
+          const lastSession = backendSessions[backendSessions.length - 1];
+          setCurrentTask(lastSession.taskName || "");
         }
       }
-    } catch {
+    } catch (err) {
+      console.error("Sync failed", err);
       setDisplaySeconds(0);
     }
   };
@@ -144,81 +154,70 @@ export default function EmployeeTracker() {
   useEffect(() => {
     if (!token) return;
     loadTodayData();
-    const i = setInterval(loadTodayData, 10000);
-    return () => clearInterval(i);
+    const intervalId = setInterval(loadTodayData, 10000);
+    return () => clearInterval(intervalId);
   }, [token]);
 
-  /* ================= LOCAL TIMER ================= */
+  /* ================= LIVE TIMER ================= */
   useEffect(() => {
     if (status !== "RUNNING") {
       setDisplaySeconds(baseSeconds);
       return;
     }
 
-    const t = setInterval(() => {
+    const timerId = setInterval(() => {
       const elapsed = Math.floor((Date.now() - lastSyncTime) / 1000);
       setDisplaySeconds(baseSeconds + elapsed);
     }, 1000);
 
-    return () => clearInterval(t);
+    return () => clearInterval(timerId);
   }, [status, baseSeconds, lastSyncTime]);
 
   /* ================= START / STOP ================= */
- const toggleTimer = async () => {
-  if (!token) return;
+  const toggleTimer = async () => {
+    if (!token) return;
 
-  if (status === "STOPPED") {
-    if (!selectedProject.trim()) {
-      setError("Please select a project");
-      return;
+    if (status === "STOPPED") {
+      if (!selectedProject.trim()) {
+        setError("Please select a project");
+        return;
+      }
+      if (!currentTask.trim()) {
+        setError("Please enter a task name");
+        return;
+      }
+      setError("");
     }
-    if (!currentTask.trim()) {
-      setError("Please enter a task name");
-      return;
-    }
-    setError("");
-  }
 
-  try {
-    if (status === "RUNNING") {
-      await axios.post(
-        `${BASE_URL}/api/v1/attendance/timer/stop`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    } else {
-      // 🔥 FIX HERE
-      const projectName =
-        PROJECTS.find((p) => p.id === selectedProject)?.name || "";
-
-      await axios.post(
-        `${BASE_URL}/api/v1/attendance/timer/start`,
-        {
+    try {
+      if (status === "RUNNING") {
+        await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        await axios.post(`${BASE_URL}/api/v1/attendance/timer/start`, {
           taskName: currentTask.trim(),
-          projectName, // ✅ correct value
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+          projectName: selectedProject,
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      loadTodayData();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to start timer");
     }
-
-    loadTodayData();
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Failed to start timer");
-  }
-};
-
-
-
-  const formatTime = (sec: number) => {
-    const s = Number(sec) || 0;
-    const h = String(Math.floor(s / 3600)).padStart(2, "0");
-    const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-    const r = String(s % 60).padStart(2, "0");
-    return `${h}:${m}:${r}`;
   };
 
-  const formatTimeOnly = (d: string) =>
-    new Date(d)
+  const formatTime = (sec: number) => {
+    const safeSec = Number(sec) || 0;
+    const h = String(Math.floor(safeSec / 3600)).padStart(2, "0");
+    const m = String(Math.floor((safeSec % 3600) / 60)).padStart(2, "0");
+    const s = String(safeSec % 60).padStart(2, "0");
+    return `${h}:${m}:${s}`;
+  };
+
+  const formatTimeOnly = (dateString: string) =>
+    new Date(dateString)
       .toLocaleTimeString("en-IN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -227,7 +226,6 @@ export default function EmployeeTracker() {
       })
       .toLowerCase();
 
-  /* ================= UI (UNCHANGED) ================= */
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -240,56 +238,91 @@ export default function EmployeeTracker() {
           </CardHeader>
 
           <CardContent className="space-y-8">
+            {/* Main Timer */}
             <div className="text-center bg-white rounded-2xl p-8 shadow-lg">
               <div className="text-7xl font-mono font-bold text-gray-900 mb-6">
                 {formatTime(displaySeconds)}
               </div>
+
+              <div className="bg-blue-50 rounded-xl py-4 px-8 inline-block">
+                <div className="text-lg text-gray-600 font-medium">
+                  Today's Total Working Time
+                </div>
+                <div className="text-4xl font-bold text-blue-600 mt-2">
+                  {formatTime(displaySeconds)}
+                </div>
+              </div>
+
+              <div className="mt-6 text-2xl font-semibold text-gray-700 capitalize">
+                {status === "RUNNING" ? "Tracking Active" : "Ready to Start"}
+              </div>
             </div>
 
+            {/* Project & Task Input - Only when stopped */}
             {status !== "RUNNING" && (
               <div className="space-y-4 max-w-md mx-auto">
-                <Select
-                  value={selectedProject}
-                  onValueChange={setSelectedProject}
-                >
-                  <SelectTrigger className="py-6 text-lg">
-                    <SelectValue placeholder="Choose project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROJECTS.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Select Project <span className="text-red-500">*</span>
+                  </label>
+                  <Select value={selectedProject} onValueChange={setSelectedProject}>
+                    <SelectTrigger className="py-6 text-lg">
+                      <SelectValue placeholder="Choose a project..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROJECTS.map((proj) => (
+                        <SelectItem key={proj.id} value={proj.id}>
+                          {proj.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Input
-                  className="py-6 text-lg"
-                  placeholder="Task name"
-                  value={currentTask}
-                  onChange={(e) => setCurrentTask(e.target.value)}
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Task Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    className="py-6 text-lg"
+                    placeholder="What are you working on?"
+                    value={currentTask}
+                    onChange={(e) => setCurrentTask(e.target.value)}
+                  />
+                </div>
+
+                {error && (
+                  <div className="text-center text-red-600 font-medium bg-red-50 py-3 rounded-lg">
+                    {error}
+                  </div>
+                )}
+
+                <p className="text-center text-sm text-gray-500">
+                  This task will be used for all sessions today unless changed
+                </p>
               </div>
             )}
 
+            {/* Start/Stop Button */}
             <div className="flex justify-center">
               <Button
                 size="lg"
-                className={`px-24 py-12 text-3xl font-bold rounded-full ${
+                className={`px-24 py-12 text-3xl font-bold rounded-full shadow-2xl transform hover:scale-105 transition-all ${
                   status === "RUNNING"
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-green-500 hover:bg-green-600"
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-green-500 hover:bg-green-600 text-white"
                 }`}
                 onClick={toggleTimer}
               >
                 {status === "RUNNING" ? (
                   <>
-                    <Pause className="w-12 h-12 mr-4" /> STOP
+                    <Pause className="w-12 h-12 mr-4" />
+                    STOP
                   </>
                 ) : (
                   <>
-                    <Play className="w-12 h-12 mr-4" /> START
+                    <Play className="w-12 h-12 mr-4" />
+                    START
                   </>
                 )}
               </Button>
@@ -297,35 +330,41 @@ export default function EmployeeTracker() {
 
             <Separator />
 
+            {/* Sessions List */}
             <div>
-              <h3 className="text-2xl font-semibold text-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-800 text-center mb-6">
                 Today's Sessions
               </h3>
-
               {sessions.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  No sessions yet
+                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">
+                  No sessions yet. Select project & task, then press START!
                 </div>
               ) : (
-                sessions.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500"
-                  >
-                    <div>
-                      <div className="font-medium text-lg">
-                        {s.taskName || "Untitled"}
+                <div className="space-y-3">
+                  {sessions.map((session: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500"
+                    >
+                      <div>
+                        <div className="font-medium text-lg text-gray-800">
+                          {session.taskName || "Untitled Task"}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {formatTimeOnly(session.startTime)} -{" "}
+                          {session.endTime
+                            ? formatTimeOnly(session.endTime)
+                            : "Running"}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        {formatTimeOnly(s.startTime)} -{" "}
-                        {s.endTime ? formatTimeOnly(s.endTime) : "Running"}
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {formatTime(Math.floor((session.durationMs || 0) / 1000))}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {formatTime(Math.floor((s.durationMs || 0) / 1000))}
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </CardContent>

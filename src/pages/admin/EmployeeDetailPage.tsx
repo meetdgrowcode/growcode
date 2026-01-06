@@ -27,7 +27,7 @@ type DayData = {
 
 /* ================= HELPERS ================= */
 
-const safe = (v: any) => Math.max(0, Number(v) || 0);
+const safe = (v: unknown) => Math.max(0, Number(v) || 0);
 
 const formatHM = (sec: number) => {
   const m = Math.floor(safe(sec) / 60);
@@ -73,34 +73,48 @@ export default function EmployeeDetailPage() {
     if (!id || !token) return;
 
     setLoading(true);
-    const res = await axios.get(
-      `${BASE_URL}/api/v1/attendance/employee/${id}/timeline?date=${date}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
 
-    if (res.data.success) {
-      const d = res.data.data;
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/api/v1/attendance/employee/${id}/timeline?date=${date}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      setData({
-        name: d.name,
-        email: d.email,
-        status: d.status,
-        totalSeconds: safe(d.totalTodaySeconds),
-        currentSessionSeconds: safe(d.currentSessionSeconds),
-        sessions: d.sessions || [],
-      });
+      if (res.data.success) {
+        const d = res.data.data;
 
-      // initialize live counters
-      setLiveTotal(safe(d.totalTodaySeconds));
-      setLiveSession(safe(d.currentSessionSeconds));
+        setData({
+          name: d.name,
+          email: d.email,
+          status: d.status,
+          totalSeconds: safe(d.totalTodaySeconds),
+          currentSessionSeconds: safe(d.currentSessionSeconds),
+          sessions: d.sessions || [],
+        });
+
+        // ✅ base values only
+        setLiveTotal(safe(d.totalTodaySeconds));
+        setLiveSession(safe(d.currentSessionSeconds));
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchByDate(selectedDate);
   }, [selectedDate, id]);
+
+  useEffect(() => {
+    if (!data || data.status !== "Active") return;
+
+    const interval = setInterval(() => {
+      setLiveTotal((prev) => prev + 1);
+      setLiveSession((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [data?.status]);
 
   /* ================= LIVE 1-SECOND TICK ================= */
 
@@ -122,16 +136,6 @@ export default function EmployeeDetailPage() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
 
-  const isToday = (d: number) =>
-    today.toDateString() === new Date(year, month, d).toDateString();
-
-  const isSelected = (d: number) =>
-    selectedDate === new Date(year, month, d).toISOString().slice(0, 10);
-
-  const selectDay = (d: number) => {
-    setSelectedDate(new Date(year, month, d).toISOString().slice(0, 10));
-  };
-
   if (loading && !data) {
     return <div className="p-10 text-center text-gray-500">Loading…</div>;
   }
@@ -141,7 +145,6 @@ export default function EmployeeDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
-
         <Link
           to="/admin/tracker"
           className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
@@ -151,8 +154,8 @@ export default function EmployeeDetailPage() {
 
         {/* CALENDAR + TOTAL */}
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+          {/* Calendar */}
 
-          {/* CALENDAR */}
           <Card>
             <CardContent className="p-4">
               <div className="flex justify-between items-center mb-3">
@@ -201,14 +204,44 @@ export default function EmployeeDetailPage() {
 
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
+
+                  // 🔥 Manual date comparison — no timezone issue
+                  const isSelected = () => {
+                    const selected = new Date(selectedDate);
+                    const current = new Date(year, month, day);
+                    return (
+                      selected.getFullYear() === current.getFullYear() &&
+                      selected.getMonth() === current.getMonth() &&
+                      selected.getDate() === current.getDate()
+                    );
+                  };
+
+                  const isToday = () => {
+                    const current = new Date(year, month, day);
+                    return (
+                      today.getFullYear() === current.getFullYear() &&
+                      today.getMonth() === current.getMonth() &&
+                      today.getDate() === current.getDate()
+                    );
+                  };
+
                   return (
                     <button
                       key={day}
-                      onClick={() => selectDay(day)}
+                      onClick={() => {
+                        const date = new Date(year, month, day);
+                        const yearStr = date.getFullYear();
+                        const monthStr = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0"
+                        );
+                        const dayStr = String(day).padStart(2, "0");
+                        setSelectedDate(`${yearStr}-${monthStr}-${dayStr}`);
+                      }}
                       className={`h-8 rounded text-sm ${
-                        isSelected(day)
+                        isSelected()
                           ? "bg-blue-600 text-white"
-                          : isToday(day)
+                          : isToday()
                           ? "bg-green-100 text-green-700"
                           : "hover:bg-gray-100"
                       }`}
@@ -225,9 +258,7 @@ export default function EmployeeDetailPage() {
           <Card>
             <CardContent className="p-8 flex flex-col justify-center items-center h-full">
               <p className="text-sm text-gray-500">Total time</p>
-              <p className="text-5xl font-bold mt-2">
-                {formatHM(liveTotal)}
-              </p>
+              <p className="text-5xl font-bold mt-2">{formatHM(liveTotal)}</p>
               <p className="text-sm text-gray-500 mt-2">
                 {new Date(selectedDate).toLocaleDateString("en-IN", {
                   weekday: "long",
@@ -240,9 +271,7 @@ export default function EmployeeDetailPage() {
               {selectedDate === todayStr && data?.status === "Active" && (
                 <div className="flex items-center gap-2 mt-4 text-green-600">
                   <Clock size={16} />
-                  <span className="font-mono">
-                    {formatHMS(liveSession)}
-                  </span>
+                  <span className="font-mono">{formatHMS(liveSession)}</span>
                 </div>
               )}
             </CardContent>
@@ -250,49 +279,41 @@ export default function EmployeeDetailPage() {
         </div>
 
         {/* SESSION LIST */}
+        {/* Sessions List */}
         <Card>
           <CardContent className="p-6">
-            {data?.sessions.length === 0 ? (
-              <p className="text-center text-gray-500">
+            {!data || data.sessions.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">
                 No sessions for this date
               </p>
             ) : (
               <div className="space-y-4">
-                {data.sessions.map((s, i) => {
-                  const duration =
-                    s.endTime
-                      ? Math.floor(s.durationMs / 1000)
-                      : Math.floor(s.durationMs / 1000) + liveSession;
-
-                  return (
-                    <div
-                      key={i}
-                      className="flex justify-between items-center"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          {s.taskName}{" "}
-                          <span className="text-blue-600">
-                            • {s.projectName}
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {timeOnly(s.startTime)} →{" "}
-                          {s.endTime ? timeOnly(s.endTime) : "Running"}
-                        </p>
-                      </div>
-
-                      <p className="font-mono font-semibold">
-                        {formatHMS(duration)}
+                {data.sessions.map((s, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">
+                        {s.taskName}{" "}
+                        <span className="text-blue-600">• {s.projectName}</span>
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {timeOnly(s.startTime)} →{" "}
+                        {s.endTime ? timeOnly(s.endTime) : "Running"}
                       </p>
                     </div>
-                  );
-                })}
+
+                    <p className="font-mono font-semibold">
+                      {formatHMS(
+                        s.endTime
+                          ? Math.floor(s.durationMs / 1000)
+                          : Math.floor(s.durationMs / 1000) + liveSession
+                      )}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
-
       </div>
     </div>
   );
