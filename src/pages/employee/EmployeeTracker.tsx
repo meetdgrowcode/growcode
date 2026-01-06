@@ -1,5 +1,5 @@
-import { useEffect, useState , useRef} from "react";
-import axios from "axios";
+import { useEffect, useState , useRef, useCallback, useLayoutEffect} from "react";
+import axios, { AxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Separator } from "@/components/ui/Separator";
@@ -17,7 +17,19 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 type Status = "STOPPED" | "RUNNING";
 
-const PROJECTS = [
+type Project = {
+  id: string;
+  name: string;
+};
+
+type Session = {
+  taskName: string;
+  startTime: string;
+  endTime?: string | null;
+  durationMs: number;
+};
+
+const PROJECTS: Project[] = [
   { id: "1", name: "Growcode HRMS" },
   { id: "2", name: "Client Dashboard" },
   { id: "3", name: "Mobile App Development" },
@@ -27,88 +39,23 @@ const PROJECTS = [
 
 export default function EmployeeTracker() {
   const [status, setStatus] = useState<Status>("STOPPED");
-  const [displaySeconds, setDisplaySeconds] = useState(0);
-  const [baseSeconds, setBaseSeconds] = useState(0);
-  const [lastSyncTime, setLastSyncTime] = useState(() => Date.now());
-  const [sessions, setSessions] = useState<[]>([]);
+  const [displaySeconds, setDisplaySeconds] = useState<number>(0);
+  const [baseSeconds, setBaseSeconds] = useState<number>(0);
+  const [lastSyncTime, setLastSyncTime] = useState<number>(() => Date.now());
+  const [sessions, setSessions] = useState<Session[]>([]);
 
-  const [selectedProject, setSelectedProject] = useState("");
-  const [currentTask, setCurrentTask] = useState("");
-  const [error, setError] = useState("");
-  const lastActivityRef = useRef(Date.now());
+  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [currentTask, setCurrentTask] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const lastActivityRef = useRef<number>(0);
+  const isInitialMount = useRef<boolean>(true);
 
-  const [idleMinutes, setIdleMinutes] = useState(0); // ← API થી આવશે
+  const [idleMinutes, setIdleMinutes] = useState<number>(0);
 
   const token = localStorage.getItem("employeeToken");
 
- 
-/* ================= FETCH IDLE MINUTES FROM API ================= */
-useEffect(() => {
-  if (!token) return;
-
-  const fetchIdleLimit = async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const minutes = Number(res.data.idleLimitMinutes);
-      setIdleMinutes(minutes > 0 ? minutes : 0);
-    } catch (err) {
-      console.error("Failed to fetch idle limit", err);
-      setIdleMinutes(0);
-    }
-  };
-  
-
-  fetchIdleLimit();
-}, [token]);
-
-  /* ================= SECRET AUTO-PAUSE (API CONTROLLED) ================= */
-useEffect(() => {
-    if (status !== "RUNNING" || idleMinutes === 0) return;
-
-    const resetActivity = () => {
-      lastActivityRef.current = Date.now(); // ← ref update
-    };
-
-    const checkIdle = async () => {
-      const idleTimeMs = Date.now() - lastActivityRef.current;
-      const idleLimitMs = idleMinutes * 60 * 1000;
-
-      if (idleTimeMs >= idleLimitMs) {
-        try {
-          await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          loadTodayData(); // UI refresh
-        } catch (err) {
-          console.error("Secret auto-stop failed", err);
-        }
-      }
-    };
-
-    const events = [
-      "mousemove",
-      "mousedown",
-      "keydown",
-      "scroll",
-      "touchstart",
-      "click",
-      "wheel",
-    ];
-
-    events.forEach((e) => window.addEventListener(e, resetActivity, { passive: true }));
-
-    const interval = setInterval(checkIdle, 5000); // 5 sec માં check (testing માટે fast)
-
-    return () => {
-      events.forEach((e) => window.removeEventListener(e, resetActivity));
-      clearInterval(interval);
-    };
-  }, [status, idleMinutes, token]);
-
-  /* ================= LOAD TODAY DATA ================= */
-  const loadTodayData = async () => {
+/* ================= LOAD TODAY DATA ================= */
+  const loadTodayData = useCallback(async (): Promise<void> => {
     if (!token) {
       setStatus("STOPPED");
       setDisplaySeconds(0);
@@ -149,19 +96,89 @@ useEffect(() => {
       console.error("Sync failed", err);
       setDisplaySeconds(0);
     }
+  }, [token]);
+useEffect(() => {
+  if (!token) return;
+
+  const fetchIdleLimit = async (): Promise<void> => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const minutes = Number(res.data.idleLimitMinutes);
+      setIdleMinutes(minutes > 0 ? minutes : 0);
+    } catch (err) {
+      console.error("Failed to fetch idle limit", err);
+      setIdleMinutes(0);
+    }
   };
+
+  fetchIdleLimit();
+}, [token]);
+
+  /* ================= SECRET AUTO-PAUSE (API CONTROLLED) ================= */
+useEffect(() => {
+    if (status !== "RUNNING" || idleMinutes === 0) return;
+
+    const resetActivity = (): void => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const checkIdle = async (): Promise<void> => {
+      const idleTimeMs = Date.now() - lastActivityRef.current;
+      const idleLimitMs = idleMinutes * 60 * 1000;
+
+      if (idleTimeMs >= idleLimitMs) {
+        try {
+          await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          loadTodayData();
+        } catch (err) {
+          console.error("Secret auto-stop failed", err);
+        }
+      }
+    };
+
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+      "wheel",
+    ];
+
+    events.forEach((e) => window.addEventListener(e, resetActivity, { passive: true }));
+
+    const interval = setInterval(checkIdle, 5000);
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetActivity));
+      clearInterval(interval);
+    };
+  }, [status, idleMinutes, token, loadTodayData]);
 
   useEffect(() => {
     if (!token) return;
-    loadTodayData();
-    const intervalId = setInterval(loadTodayData, 10000);
+    
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      void loadTodayData();
+    }
+    
+    const intervalId = setInterval(() => void loadTodayData(), 10000);
     return () => clearInterval(intervalId);
-  }, [token]);
+  }, [token, loadTodayData]);
 
   /* ================= LIVE TIMER ================= */
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // Only update display when status changes to RUNNING or when timer runs
     if (status !== "RUNNING") {
-      setDisplaySeconds(baseSeconds);
+      // Sync display with base seconds when stopped (don't call setState in early return)
+      setDisplaySeconds((prev) => (prev === baseSeconds ? prev : baseSeconds));
       return;
     }
 
@@ -174,7 +191,7 @@ useEffect(() => {
   }, [status, baseSeconds, lastSyncTime]);
 
   /* ================= START / STOP ================= */
-  const toggleTimer = async () => {
+  const toggleTimer = async (): Promise<void> => {
     if (!token) return;
 
     if (status === "STOPPED") {
@@ -203,12 +220,13 @@ useEffect(() => {
         });
       }
       loadTodayData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to start timer");
+    } catch (err) {
+      const axiosError = err as AxiosError<Record<string, unknown>>;
+      setError((axiosError?.response?.data as Record<string, unknown>)?.message as string || "Failed to start timer");
     }
   };
 
-  const formatTime = (sec: number) => {
+  const formatTime = (sec: number): string => {
     const safeSec = Number(sec) || 0;
     const h = String(Math.floor(safeSec / 3600)).padStart(2, "0");
     const m = String(Math.floor((safeSec % 3600) / 60)).padStart(2, "0");
@@ -216,7 +234,7 @@ useEffect(() => {
     return `${h}:${m}:${s}`;
   };
 
-  const formatTimeOnly = (dateString: string) =>
+  const formatTimeOnly = (dateString: string): string =>
     new Date(dateString)
       .toLocaleTimeString("en-IN", {
         hour: "2-digit",
@@ -341,7 +359,7 @@ useEffect(() => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {sessions.map((session: any, index: number) => (
+                  {sessions.map((session: Session, index: number) => (
                     <div
                       key={index}
                       className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -49,6 +49,23 @@ const timeOnly = (iso: string) =>
     hour12: true,
   });
 
+/* ================= PROJECT MAPPING ================= */
+const PROJECTS = [
+  { id: "1", name: "Growcode HRMS" },
+  { id: "2", name: "Client Dashboard" },
+  { id: "3", name: "Mobile App Development" },
+  { id: "4", name: "Internal Tools" },
+  { id: "5", name: "Marketing Website" },
+];
+
+const getProjectName = (projectIdOrName: string): string => {
+  if (!projectIdOrName || projectIdOrName === "-" || projectIdOrName === "No Project") {
+    return projectIdOrName || "Unknown";
+  }
+  const project = PROJECTS.find(p => p.id === projectIdOrName);
+  return project ? project.name : projectIdOrName;
+};
+
 /* ================= COMPONENT ================= */
 
 export default function EmployeeDetailPage() {
@@ -69,7 +86,7 @@ export default function EmployeeDetailPage() {
 
   /* ================= API ================= */
 
-  const fetchByDate = async (date: string) => {
+  const fetchByDate = useCallback(async (date: string) => {
     if (!id || !token) return;
 
     setLoading(true);
@@ -99,11 +116,11 @@ export default function EmployeeDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, token]);
 
   useEffect(() => {
     fetchByDate(selectedDate);
-  }, [selectedDate, id]);
+  }, [selectedDate, fetchByDate]);
 
   useEffect(() => {
     if (!data || data.status !== "Active") return;
@@ -114,7 +131,7 @@ export default function EmployeeDetailPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [data?.status]);
+  }, [data]);
 
   /* ================= LIVE 1-SECOND TICK ================= */
 
@@ -129,7 +146,7 @@ export default function EmployeeDetailPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [data, selectedDate]);
+  }, [data, selectedDate, todayStr]);
 
   /* ================= CALENDAR ================= */
 
@@ -293,7 +310,7 @@ export default function EmployeeDetailPage() {
                     <div>
                       <p className="font-medium">
                         {s.taskName}{" "}
-                        <span className="text-blue-600">• {s.projectName}</span>
+                        <span className="text-blue-600">• {getProjectName(s.projectName)}</span>
                       </p>
                       <p className="text-sm text-gray-500">
                         {timeOnly(s.startTime)} →{" "}

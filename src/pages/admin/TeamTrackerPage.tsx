@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, useCallback } from "react";
+import axios, { AxiosError } from "axios";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
@@ -30,7 +30,16 @@ type TeamMember = {
   status: "Active" | "Idle" | "Offline";
 };
 
-const formatTime = (sec: number) => {
+type ProjectType = {
+  id: string;
+  name: string;
+};
+
+type StatusOrder = {
+  [key in "Active" | "Idle" | "Offline"]: number;
+};
+
+const formatTime = (sec: number): string => {
   const safeSec = Math.floor(Number(sec) || 0);
   const h = String(Math.floor(safeSec / 3600)).padStart(2, "0");
   const m = String(Math.floor((safeSec % 3600) / 60)).padStart(2, "0");
@@ -39,7 +48,7 @@ const formatTime = (sec: number) => {
 };
 
 // 🔥 Project ID → Name mapping
-const PROJECTS = [
+const PROJECTS: ProjectType[] = [
   { id: "1", name: "Growcode HRMS" },
   { id: "2", name: "Client Dashboard" },
   { id: "3", name: "Mobile App Development" },
@@ -48,13 +57,25 @@ const PROJECTS = [
 ];
 
 // 🔥 Function to convert project id/number to name
-const getProjectName = (projectIdOrName: string) => {
+const getProjectName = (projectIdOrName: string): string => {
   if (!projectIdOrName || projectIdOrName === "-" || projectIdOrName === "No Project") {
     return "";
   }
 
   const project = PROJECTS.find(p => p.id === projectIdOrName);
   return project ? project.name : projectIdOrName;
+};
+
+type ApiResponse = {
+  success: boolean;
+  data: Array<Record<string, unknown>>;
+  message?: string;
+};
+
+type IdleLimitResponse = {
+  idleLimitMinutes?: number;
+  success?: boolean;
+  message?: string;
 };
 
 export default function TeamTrackerPage() {
@@ -69,7 +90,7 @@ export default function TeamTrackerPage() {
 
   const token = localStorage.getItem("admin_token");
 
-  const projects = [
+  const projects: string[] = [
     "All Projects",
     "Growcode HRMS",
     "Client Dashboard",
@@ -79,34 +100,34 @@ export default function TeamTrackerPage() {
   ];
 
   /* ================= FETCH TEAM DATA ================= */
-  const fetchTeamTracker = async () => {
+  const fetchTeamTracker = useCallback(async (): Promise<void> => {
     if (!token) {
       setLoading(false);
       return;
     }
 
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/attendance/dashboard/admin`, {
+      const res = await axios.get<ApiResponse>(`${BASE_URL}/api/v1/attendance/dashboard/admin`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.data.success) {
-        const mapped = res.data.data.map((emp: any) => ({
-          _id: emp._id,
-          name: emp.name,
-          email: emp.email,
-          projectName: emp.projectName || "-",
-          taskName: emp.taskName || "",
-          totalTodaySeconds: emp.totalTodaySeconds,
-          currentSessionSeconds: emp.currentSessionSeconds,
-          yesterdaySeconds: emp.yesterdaySeconds,
-          thisWeekSeconds: emp.thisWeekSeconds,
-          thisMonthSeconds: emp.thisMonthSeconds,
-          status: emp.status,
+        const mapped = res.data.data.map((emp: Record<string, unknown>) => ({
+          _id: String(emp._id || ""),
+          name: String(emp.name || ""),
+          email: String(emp.email || ""),
+          projectName: String(emp.projectName || "-"),
+          taskName: String(emp.taskName || ""),
+          totalTodaySeconds: Number(emp.totalTodaySeconds || 0),
+          currentSessionSeconds: Number(emp.currentSessionSeconds || 0),
+          yesterdaySeconds: Number(emp.yesterdaySeconds || 0),
+          thisWeekSeconds: Number(emp.thisWeekSeconds || 0),
+          thisMonthSeconds: Number(emp.thisMonthSeconds || 0),
+          status: (emp.status as "Active" | "Idle" | "Offline") || "Offline",
         }));
 
+        const order: StatusOrder = { Active: 0, Idle: 1, Offline: 2 };
         mapped.sort((a: TeamMember, b: TeamMember) => {
-          const order = { Active: 0, Idle: 1, Offline: 2 };
           return order[a.status] - order[b.status];
         });
 
@@ -117,22 +138,22 @@ export default function TeamTrackerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   /* ================= FETCH CURRENT IDLE LIMIT ================= */
-  const fetchIdleLimit = async () => {
+  const fetchIdleLimit = useCallback(async (): Promise<void> => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
+      const res = await axios.get<IdleLimitResponse>(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIdleMinutes(res.data.idleLimitMinutes?.toString() || "");
     } catch (err) {
       console.error("Failed to fetch idle limit", err);
     }
-  };
+  }, [token]);
 
   /* ================= SAVE IDLE LIMIT ================= */
-  const saveIdleLimit = async () => {
+  const saveIdleLimit = async (): Promise<void> => {
     if (!idleMinutes || Number(idleMinutes) < 1) {
       setSaveMessage("Please enter a valid number (minimum 1 minute)");
       setTimeout(() => setSaveMessage(""), 3000);
@@ -141,23 +162,26 @@ export default function TeamTrackerPage() {
 
     setSaving(true);
     try {
-      const res = await axios.post(
+      const res = await axios.post<IdleLimitResponse>(
         `${BASE_URL}/api/v1/admin/settings/idle-limit`,
         { idleLimitMinutes: Number(idleMinutes) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (res.data.success) {
-        setIdleMinutes(res.data.idleLimitMinutes.toString());
+        setIdleMinutes(res.data.idleLimitMinutes?.toString() || "");
         setSaveMessage("Auto-pause time saved successfully!");
       } else {
         setSaveMessage(res.data.message || "Failed to save");
       }
 
       setTimeout(() => setSaveMessage(""), 3000);
-    } catch (err: any) {
+    } catch (err) {
+      const axiosError = err as AxiosError<Record<string, unknown>>;
       console.error("Save idle limit error:", err);
-      setSaveMessage(err.response?.data?.message || "Failed to save");
+      setSaveMessage(
+        (axiosError.response?.data as Record<string, unknown>)?.message as string || "Failed to save"
+      );
       setTimeout(() => setSaveMessage(""), 3000);
     } finally {
       setSaving(false);
@@ -172,21 +196,24 @@ export default function TeamTrackerPage() {
       const dataInterval = setInterval(fetchTeamTracker, 30000);
       return () => clearInterval(dataInterval);
     }
-  }, [token]);
+  }, [token, fetchTeamTracker, fetchIdleLimit]);
 
   // Live 1-second update for running timers
   useEffect(() => {
     const liveInterval = setInterval(() => {
       setTeamData((prev) =>
-        prev.map((emp) =>
-          emp.status === "Active"
-            ? {
-                ...emp,
-                currentSessionSeconds: emp.currentSessionSeconds + 1,
-                totalTodaySeconds: emp.totalTodaySeconds + 1,
-              }
-            : emp
-        )
+        prev.map((emp) => {
+          if (emp.status === "Active") {
+            return {
+              ...emp,
+              currentSessionSeconds: emp.currentSessionSeconds + 1,
+              totalTodaySeconds: emp.totalTodaySeconds + 1,
+              thisWeekSeconds: emp.thisWeekSeconds + 1,
+              thisMonthSeconds: emp.thisMonthSeconds + 1,
+            };
+          }
+          return emp;
+        })
       );
     }, 1000);
 
@@ -296,8 +323,8 @@ export default function TeamTrackerPage() {
                   <div className="flex items-center justify-between">
                     {/* Left - Employee Info */}
                     <div className="flex items-center gap-4 flex-1">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarFallback className="text-sm font-semibold bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarFallback className="text-sm font-semibold bg-linear-to-br from-indigo-500 to-purple-600 text-white">
                           {emp.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
