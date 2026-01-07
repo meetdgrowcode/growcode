@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Dialog,
@@ -29,6 +29,15 @@ export default function ApplyLeaveModal({
 
   const token = localStorage.getItem("employeeToken");
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      setDate("");
+      setToDate("");
+      setLeaveReason("");
+    }
+  }, [open]);
+
   const submitLeave = async () => {
     if (!date || !toDate || !leaveReason) {
       alert("All fields are required");
@@ -37,8 +46,8 @@ export default function ApplyLeaveModal({
 
     try {
       setLoading(true);
-      await axios.post(
-        `${BASE_URL}/api/v1/attendance/attendance/apply-leave`,
+      const res = await axios.post(
+        `${BASE_URL}/api/v1/attendance/apply-leave`,
         { date, toDate, leaveReason },
         {
           headers: {
@@ -48,7 +57,8 @@ export default function ApplyLeaveModal({
         }
       );
 
-      onSuccess();
+      const created = res?.data?.leave || res?.data?.attendance || null;
+      onSuccess(created);
       onClose();
     } catch (err: any) {
       alert(err?.response?.data?.message || "Failed to apply leave");
@@ -57,8 +67,16 @@ export default function ApplyLeaveModal({
     }
   };
 
+const handleOpenChange = (isOpen: boolean) => {
+  // only close when modal was open and user tries to close it
+  if (open && !isOpen) {
+    onClose();
+  }
+};
+
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Apply Leave</DialogTitle>

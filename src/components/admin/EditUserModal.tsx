@@ -16,6 +16,7 @@ type User = {
   email: string;
   role: string;
   department: string;
+  salary?: number;
   isActive: boolean;
 };
 
@@ -60,6 +61,23 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
           },
         }
       );
+
+      // Update salary using the salary API
+      if (form.salary !== undefined && form.salary !== null) {
+        await axios.put(
+          `${BASE_URL}/api/v1/admin/update-salary-by-name`,
+          {
+            name: form.name,
+            salary: Number(form.salary),
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      }
 
       onSuccess(); // refetch users
       onClose();
@@ -106,16 +124,13 @@ export default function EditUserModal({ user, onClose, onSuccess }: Props) {
             placeholder="Department"
           />
 
-          {/* ✅ STATUS SELECT */}
-          <select
-            name="isActive"
-            value={String(form.isActive)}
+          <Input
+            name="salary"
+            type="number"
+            value={form.salary || ""}
             onChange={handleChange}
-            className="w-full rounded-md border px-3 py-2 text-sm"
-          >
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+            placeholder="Salary"
+          />
 
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="outline" onClick={onClose}>

@@ -13,9 +13,26 @@ import {
   ChevronRight,
   Globe2,
 } from "lucide-react";
-import Slider, { Settings } from "react-slick";
+import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+
+// Type for Settings
+type SliderSettings = {
+  infinite?: boolean;
+  speed?: number;
+  slidesToShow?: number;
+  slidesToScroll?: number;
+  adaptiveHeight?: boolean;
+  arrows?: boolean;
+  dots?: boolean;
+  autoplay?: boolean;
+  autoplaySpeed?: number;
+  pauseOnHover?: boolean;
+  accessibility?: boolean;
+  responsive?: any[];
+  centerMode?: boolean;
+};
 
 // ---- Scroll reveal hook (no framer-motion) ----
 function useRevealOnScroll() {
@@ -67,9 +84,9 @@ const teams = [
 
 export function About() {
   useRevealOnScroll();
-  const sliderRef = useRef<Slider | null>(null);
+  const sliderRef = useRef<typeof Slider | null>(null);
 
-  const sliderSettings: Settings = {
+  const sliderSettings: SliderSettings = {
     infinite: true,
     speed: 450,
     slidesToShow: 3,
@@ -103,11 +120,11 @@ export function About() {
   };
 
   const handlePrev = () => {
-    sliderRef.current?.slickPrev();
+    (sliderRef.current as any)?.slickPrev?.();
   };
 
   const handleNext = () => {
-    sliderRef.current?.slickNext();
+    (sliderRef.current as any)?.slickNext?.();
   };
 
   return (

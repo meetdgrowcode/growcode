@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu as IconMenu,
@@ -35,19 +35,19 @@ const NAV: NavItem[] = [
     key: "dashboard",
     label: "Dashboard",
     to: "/employee",
-    icon: <LayoutDashboard className="h-5 w-5" />,
+    icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.5} />,
   },
   {
     key: "tracker",
     label: "Tracker",
     to: "/employee/tracker",
-    icon: <ClipboardList className="h-5 w-5" />,
+    icon: <ClipboardList className="h-5 w-5" strokeWidth={1.5} />,
   },
   {
     key: "settings",
     label: "Settings",
     to: "/employee/settings",
-    icon: <Settings className="h-5 w-5" />,
+    icon: <Settings className="h-5 w-5" strokeWidth={1.5} />,
   },
 ];
 
@@ -58,6 +58,8 @@ export default function EmployeeLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Define BASE_URL safely
   const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
@@ -116,65 +118,67 @@ export default function EmployeeLayout() {
   const profileImageUrl = user?.profilePic ? `${BASE_URL}${user.profilePic}` : null;
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-gray-100">
       {/* ================= SIDEBAR ================= */}
       <aside
-        className={`hidden md:flex flex-col border-r bg-white transition-all duration-200 ${
-          collapsed ? "w-20" : "w-72"
+        className={`hidden md:flex flex-col border-r bg-white transition-all duration-300 ${
+          collapsed ? "w-20" : "w-64"
         }`}
       >
-        {/* TOP BAR */}
-        <div className="h-16 flex items-center justify-between px-4 border-b">
+        {/* TOP BAR / BRAND */}
+        <div className="h-16 flex items-center justify-between px-4">
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
                 G
               </div>
               <div>
-                <div className="text-sm font-semibold leading-tight">
-                  GrowCode
-                </div>
-                <div className="text-xs text-slate-500">Employee Panel</div>
+                <div className="text-sm font-bold text-gray-900">GrowCode</div>
+                <div className="text-xs text-gray-500">Admin panel</div>
               </div>
             </div>
           )}
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-md hover:bg-slate-100"
+            className="p-2 rounded hover:bg-gray-100"
+            aria-label="Toggle sidebar"
           >
-            <IconMenu className="h-5 w-5" />
+            <IconMenu className="h-5 w-5 text-gray-700" />
           </button>
         </div>
 
         {/* NAVIGATION */}
-        <div className="flex-1 px-2 pt-2">
+        <nav className="flex-1 px-0 py-4 space-y-1">
           {NAV.map((item) => {
             const active = location.pathname === item.to;
             return (
               <Link
                 key={item.key}
                 to={item.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition ${
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center justify-center md:justify-start gap-3 mx-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active
-                    ? "bg-sky-100 text-sky-700"
-                    : "text-slate-700 hover:bg-slate-100"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
-                {item.icon}
+                {React.cloneElement(item.icon as React.ReactElement, {
+                  className: "h-5 w-5 flex-shrink-0"
+                })}
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         {/* LOGOUT */}
-        <div className="border-t p-3">
+        <div className="p-4">
           <button
             onClick={logout}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-red-600 hover:bg-red-50"
+            className="flex w-full items-center justify-center md:justify-start gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-5 w-5 flex-shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
         </div>
@@ -183,75 +187,53 @@ export default function EmployeeLayout() {
       {/* ================= MAIN CONTENT ================= */}
       <div className="flex flex-1 flex-col">
         {/* HEADER */}
-        <header className="flex items-center justify-between border-b bg-white px-6 py-4">
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold">
-              Welcome, {user?.name || "Employee"}
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">{user?.name || "Employee"}</h2>
+            <p className="text-xs text-gray-500">Overview of recent activity</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 border px-3 py-1 rounded-md">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input
-                placeholder="Search..."
-                className="bg-transparent outline-none text-sm w-48"
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded px-3 py-2">
+              <Search className="h-4 w-4 text-gray-400" />
+              <input 
+                placeholder="Search..." 
+                className="bg-transparent outline-none text-sm w-48 placeholder-gray-400" 
               />
             </div>
 
-            <button className="p-2 rounded-md hover:bg-slate-100">
-              <Bell className="h-5 w-5 text-slate-600" />
+            <button className="relative p-2 rounded hover:bg-gray-100" title="Notifications">
+              <Bell className="h-5 w-5 text-gray-600" />
+              <span className="absolute -top-1 -right-1 inline-flex h-2 w-2 rounded-full bg-red-500" />
             </button>
 
-            {/* Clickable Avatar with Lightbox */}
-            <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-              <DialogTrigger asChild>
-                <button className="focus:outline-none">
-                  <Avatar
-                    className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-transparent hover:ring-sky-400 transition-all duration-200"
-                  >
-                    {profileImageUrl ? (
-                      <img
-                        src={profileImageUrl}
-                        alt={user?.name}
-                        className="h-full w-full rounded-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                          (e.target as HTMLImageElement).parentElement!.textContent =
-                            getInitials(user?.name || "U");
-                        }}
-                      />
-                    ) : (
-                      getInitials(user?.name || "U")
-                    )}
-                  </Avatar>
-                </button>
-              </DialogTrigger>
-
-              {/* Lightbox (Moti Image) */}
-              <DialogContent className="max-w-4xl border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
-                <div className="relative w-full max-h-[90vh]">
-                  {profileImageUrl && (
-                    <img
-                      src={profileImageUrl}
-                      alt={user?.name}
-                      className="max-h-[90vh] max-w-full rounded-xl shadow-2xl object-contain mx-auto"
-                    />
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setUserMenuOpen((s) => !s)}
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100"
+                aria-expanded={userMenuOpen}
+              >
+                <Avatar className="h-9 w-9">
+                  {profileImageUrl ? (
+                    <img src={profileImageUrl} alt={user?.name} className="h-full w-full rounded-full object-cover" />
+                  ) : (
+                    getInitials(user?.name || "U")
                   )}
-                  <button
-                    onClick={() => setLightboxOpen(false)}
-                    className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 text-gray-800 shadow-lg text-xl font-bold"
-                  >
-                    ✕
-                  </button>
+                </Avatar>
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-md z-40">
+                  <Link to="/employee/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b">Settings</Link>
+                  <button onClick={logout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Logout</button>
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+            </div>
           </div>
         </header>
 
         {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
+        <main className="flex-1 overflow-y-auto p-6 bg-white">
           <Outlet />
         </main>
       </div>

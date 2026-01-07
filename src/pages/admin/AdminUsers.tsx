@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/Table";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import EditUserModal from "@/components/admin/EditUserModal";
+import CreateUserModal from "@/components/admin/CreateUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -23,12 +24,14 @@ type User = {
   email: string;
   role: "admin" | "employee";
   department: string;
+  salary?: number;
   isActive: boolean;
 };
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [editUser, setEditUser] = useState<User | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const token = localStorage.getItem("admin_token");
@@ -50,25 +53,6 @@ export default function AdminUsers() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-
-  /* ================= TOGGLE ACTIVE ================= */
-  const toggleStatus = async (u: User) => {
-    try {
-      setLoadingId(u._id);
-
-      await axios.put(
-        `${BASE_URL}/api/v1/employee/update/${u._id}`,
-        { isActive: !u.isActive },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      fetchUsers();
-    } catch (err) {
-      console.error("Update status failed", err);
-    } finally {
-      setLoadingId(null);
-    }
-  };
 
   /* ================= DELETE USER ================= */
   const deleteUser = async (id: string) => {
@@ -92,8 +76,17 @@ export default function AdminUsers() {
   /* ================= UI ================= */
   return (
     <Card>
-      <CardHeader className="font-semibold">
-        Employees ({users.length})
+      <CardHeader className="flex justify-between items-center">
+        <span className="font-semibold">
+          Employees ({users.length})
+        </span>
+        <Button 
+          onClick={() => setCreateOpen(true)}
+          className="flex gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Employee
+        </Button>
       </CardHeader>
 
       <CardContent className="overflow-x-auto">
@@ -103,7 +96,8 @@ export default function AdminUsers() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Salary</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -112,7 +106,7 @@ export default function AdminUsers() {
             {users.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-center text-sm text-muted-foreground"
                 >
                   No employees found
@@ -124,19 +118,9 @@ export default function AdminUsers() {
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.role}</TableCell>
-
+                  <TableCell>{u.department}</TableCell>
                   <TableCell>
-                    <button
-                      disabled={loadingId === u._id}
-                      onClick={() => toggleStatus(u)}
-                      className={`px-2 py-1 rounded text-xs font-medium transition ${
-                        u.isActive
-                          ? "bg-green-100 text-green-700 hover:bg-green-200"
-                          : "bg-red-100 text-red-700 hover:bg-red-200"
-                      }`}
-                    >
-                      {u.isActive ? "Active" : "Inactive"}
-                    </button>
+                    {u.salary ? `₹${u.salary.toLocaleString()}` : "-"}
                   </TableCell>
 
                   <TableCell className="flex justify-end gap-2">
@@ -168,6 +152,13 @@ export default function AdminUsers() {
         <EditUserModal
           user={editUser}
           onClose={() => setEditUser(null)}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      {createOpen && (
+        <CreateUserModal
+          onClose={() => setCreateOpen(false)}
           onSuccess={fetchUsers}
         />
       )}

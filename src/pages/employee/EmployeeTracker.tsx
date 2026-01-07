@@ -82,6 +82,10 @@ export default function EmployeeTracker() {
         const syncedSeconds = Math.floor(totalMs / 1000);
 
         setStatus(newStatus);
+        // ensure idle tracker starts from now when timer is running
+        if (newStatus === "RUNNING") {
+          lastActivityRef.current = Date.now();
+        }
         setBaseSeconds(syncedSeconds);
         setLastSyncTime(Date.now());
         setDisplaySeconds(syncedSeconds);
@@ -143,9 +147,15 @@ useEffect(() => {
     const events = [
       "mousemove",
       "mousedown",
+      // include more keyboard/input events so typing counts as activity
       "keydown",
+      "keypress",
+      "keyup",
+      "input",
+      "focusin",
       "scroll",
       "touchstart",
+      "touchmove",
       "click",
       "wheel",
     ];
@@ -218,6 +228,8 @@ useEffect(() => {
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        // mark activity immediately after starting the timer
+        lastActivityRef.current = Date.now();
       }
       loadTodayData();
     } catch (err) {

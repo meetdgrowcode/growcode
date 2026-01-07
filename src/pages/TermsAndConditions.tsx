@@ -104,7 +104,7 @@ export default function TermsAndConditions() {
 
     let cursorY = marginTop;
 
-    lines.forEach((line) => {
+    lines.forEach((line: string) => {
       if (cursorY > 280) {
         doc.addPage();
         cursorY = marginTop;

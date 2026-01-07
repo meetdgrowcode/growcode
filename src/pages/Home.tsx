@@ -211,7 +211,7 @@ export function Home() {
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
               variants={containerVariants}
             >
-              {perks.map((perk, index) => {
+              {perks.map((perk) => {
                 const Icon = perk.icon;
                 return (
                   <motion.div

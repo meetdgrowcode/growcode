@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom"; // ← Add for navigation
+import { Link } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import {
   Table,
   TableHeader,
@@ -12,21 +11,12 @@ import {
   TableCell,
   TableHead,
 } from "@/components/ui/Table";
-import { Plus, Clock } from "lucide-react"; // ← Clock for tracker link
+import { Plus, Clock } from "lucide-react";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 /* ================= TYPES ================= */
-
-type User = {
-  _id: string;
-  name: string;
-  surname: string;
-  email: string;
-  isActive: boolean;
-  createdAt?: string;
-};
 
 type Leave = {
   _id: string;
@@ -39,64 +29,16 @@ type Leave = {
   } | null;
 };
 
-/* ================= HELPERS ================= */
-
-const formatDate = (date?: string) => {
-  if (!date) return "-";
-  const d = new Date(date);
-  return `${String(d.getDate()).padStart(2, "0")}/${String(
-    d.getMonth() + 1
-  ).padStart(2, "0")}/${d.getFullYear()}`;
-};
-
-const isTodayOrYesterday = (date?: string) => {
-  if (!date) return false;
-  const d = new Date(date);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-
-  return (
-    d.toDateString() === today.toDateString() ||
-    d.toDateString() === yesterday.toDateString()
-  );
-};
-
 /* ================= COMPONENT ================= */
 
 export default function AdminDashboardPage() {
-  const [users, setUsers] = useState<User[]>([]);
   const [pendingLeaves, setPendingLeaves] = useState<Leave[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
   const token = localStorage.getItem("admin_token");
 
-  /* ================= FETCH EMPLOYEES ================= */
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/api/v1/employee`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (isMounted) {
-          setUsers(res.data.data || res.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch users", error);
-      }
-    };
-
-    fetchUsers();
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
-
   /* ================= FETCH PENDING LEAVES ================= */
-  const fetchPendingLeaves = async () => {
+  const fetchPendingLeaves = useCallback(async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/v1/attendance/admin/pending-leaves`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -105,11 +47,20 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error("Failed to fetch pending leaves", error);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
-    fetchPendingLeaves();
-  }, [token]);
+    if (!token) return;
+
+    // defer call to avoid synchronous setState inside effect body
+    (async () => {
+      try {
+        await fetchPendingLeaves();
+      } catch (error) {
+        console.error("Error fetching pending leaves on mount", error);
+      }
+    })();
+  }, [token, fetchPendingLeaves]);
 
   /* ================= LEAVE ACTION ================= */
   const handleLeaveAction = async (id: string, action: "approve" | "reject") => {
@@ -124,8 +75,6 @@ export default function AdminDashboardPage() {
   };
 
   /* ================= CALCULATIONS ================= */
-  const activeUsers = users.filter((u) => u.isActive);
-  const recentActiveUsers = activeUsers.filter((u) => isTodayOrYesterday(u.createdAt));
 
   return (
     <div className="space-y-10">
@@ -146,50 +95,6 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
       </div>
-
-      {/* ================= ACTIVE EMPLOYEES ================= */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Active Employees</CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Date</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {recentActiveUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No recent active employees
-                  </TableCell>
-                </TableRow>
-              ) : (
-                recentActiveUsers.map((u) => (
-                  <TableRow key={u._id}>
-                    <TableCell className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-gradient-to-br from-sky-500 to-indigo-600 text-white font-bold">
-                          {u.name[0].toUpperCase()}{u.surname ? u.surname[0].toUpperCase() : ""}
-                        </AvatarFallback>
-                      </Avatar>
-                      {u.name} {u.surname}
-                    </TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>{formatDate(u.createdAt)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
 
       {/* ================= LEAVE APPROVAL ================= */}
       <Card>

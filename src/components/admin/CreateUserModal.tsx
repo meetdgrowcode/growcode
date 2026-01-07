@@ -20,6 +20,7 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
     password: "",
     role: "",
     department: "",
+    salary: "",
     isActive: true,
   });
 
@@ -36,7 +37,7 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
 
   const handleCreate = async () => {
     // ✅ FRONTEND VALIDATION (IMPORTANT)
-    if (!form.name || !form.email || !form.password || !form.role || !form.department) {
+    if (!form.name || !form.email || !form.password || !form.role || !form.department || !form.salary) {
       setError("All fields are required");
       return;
     }
@@ -46,10 +47,16 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
       return;
     }
 
+    if (isNaN(Number(form.salary)) || Number(form.salary) <= 0) {
+      setError("Salary must be a valid positive number");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      // Create employee first
       await axios.post(
         `${BASE_URL}/api/v1/employee/add`,
         {
@@ -59,6 +66,21 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
           role: "employee",
           department: form.department,
           isActive: form.isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update salary using the salary API
+      await axios.put(
+        `${BASE_URL}/api/v1/admin/update-salary-by-name`,
+        {
+          name: form.name,
+          salary: Number(form.salary),
         },
         {
           headers: {
@@ -133,6 +155,14 @@ export default function CreateUserModal({ onClose, onSuccess }: Props) {
             name="department"
             placeholder="Department (e.g. IT)"
             value={form.department}
+            onChange={handleChange}
+          />
+
+          <Input
+            name="salary"
+            type="number"
+            placeholder="Salary"
+            value={form.salary}
             onChange={handleChange}
           />
 
