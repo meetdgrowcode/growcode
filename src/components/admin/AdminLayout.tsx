@@ -11,6 +11,7 @@ import {
   Search,
   X,
   Clock,
+  DollarSign,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -28,6 +29,7 @@ const NAV: NavItem[] = [
   { key: "home", label: "Overview", to: "/admin", icon: <Home className="h-5 w-5" /> },
   { key: "users", label: "Users", to: "/admin/users", icon: <Users className="h-5 w-5" /> },
   { key: "tracker", label: "Tracker", to: "/admin/tracker", icon: <Clock className="h-5 w-5" /> }, // ← New Tracker link with Clock icon
+  { key: "payroll", label: "Payroll", to: "/admin/payroll", icon: <DollarSign className="h-5 w-5" /> },
   { key: "settings", label: "Settings", to: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 

@@ -39,6 +39,7 @@ import EmployeeTracker from "./pages/employee/EmployeeTracker";
 import ProfileSettings from "./pages/employee/ProfileSettings";
 import TeamTrackerPage from "./pages/admin/TeamTrackerPage";
 import EmployeeDetailPage from "./pages/admin/EmployeeDetailPage";  // ← admin folder માં રાખ
+import Payroll from "@/pages/admin/Payroll";
 
 function AppContent() {
   const location = useLocation();
@@ -82,6 +83,7 @@ function AppContent() {
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="tracker" element={<TeamTrackerPage />} />
+              <Route path="payroll" element={<Payroll />} />
               {/* 👈 અહીં add કર્યું Employee Detail Page */}
               <Route path="employee/:id" element={<EmployeeDetailPage />} />
             </Route>

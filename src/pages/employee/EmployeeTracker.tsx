@@ -1,7 +1,13 @@
-import { useEffect, useState , useRef, useCallback, useLayoutEffect} from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import axios, { AxiosError } from "axios";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Separator } from "@/components/ui/Separator";
 import { Input } from "@/components/ui/Input";
 import {
@@ -11,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { Play, Pause, Clock } from "lucide-react";
+import { Play, Pause, Clock, Briefcase, CheckCircle2, Timer } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -54,7 +61,7 @@ export default function EmployeeTracker() {
 
   const token = localStorage.getItem("employeeToken");
 
-/* ================= LOAD TODAY DATA ================= */
+  /* ================= LOAD TODAY DATA ================= */
   const loadTodayData = useCallback(async (): Promise<void> => {
     if (!token) {
       setStatus("STOPPED");
@@ -67,9 +74,12 @@ export default function EmployeeTracker() {
     }
 
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/attendance/today-status`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `${BASE_URL}/api/v1/attendance/today-status`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (res.data.success) {
         const {
@@ -78,7 +88,8 @@ export default function EmployeeTracker() {
           sessions: backendSessions = [],
         } = res.data;
 
-        const newStatus: Status = backendStatus === "WORKING" ? "RUNNING" : "STOPPED";
+        const newStatus: Status =
+          backendStatus === "WORKING" ? "RUNNING" : "STOPPED";
         const syncedSeconds = Math.floor(totalMs / 1000);
 
         setStatus(newStatus);
@@ -101,27 +112,31 @@ export default function EmployeeTracker() {
       setDisplaySeconds(0);
     }
   }, [token]);
-useEffect(() => {
-  if (!token) return;
 
-  const fetchIdleLimit = async (): Promise<void> => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const minutes = Number(res.data.idleLimitMinutes);
-      setIdleMinutes(minutes > 0 ? minutes : 0);
-    } catch (err) {
-      console.error("Failed to fetch idle limit", err);
-      setIdleMinutes(0);
-    }
-  };
+  useEffect(() => {
+    if (!token) return;
 
-  fetchIdleLimit();
-}, [token]);
+    const fetchIdleLimit = async (): Promise<void> => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/v1/admin/settings/idle-limit`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const minutes = Number(res.data.idleLimitMinutes);
+        setIdleMinutes(minutes > 0 ? minutes : 0);
+      } catch (err) {
+        console.error("Failed to fetch idle limit", err);
+        setIdleMinutes(0);
+      }
+    };
+
+    fetchIdleLimit();
+  }, [token]);
 
   /* ================= SECRET AUTO-PAUSE (API CONTROLLED) ================= */
-useEffect(() => {
+  useEffect(() => {
     if (status !== "RUNNING" || idleMinutes === 0) return;
 
     const resetActivity = (): void => {
@@ -134,9 +149,13 @@ useEffect(() => {
 
       if (idleTimeMs >= idleLimitMs) {
         try {
-          await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          await axios.post(
+            `${BASE_URL}/api/v1/attendance/timer/stop`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
           loadTodayData();
         } catch (err) {
           console.error("Secret auto-stop failed", err);
@@ -160,7 +179,9 @@ useEffect(() => {
       "wheel",
     ];
 
-    events.forEach((e) => window.addEventListener(e, resetActivity, { passive: true }));
+    events.forEach((e) =>
+      window.addEventListener(e, resetActivity, { passive: true })
+    );
 
     const interval = setInterval(checkIdle, 5000);
 
@@ -172,13 +193,13 @@ useEffect(() => {
 
   useEffect(() => {
     if (!token) return;
-    
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
       // eslint-disable-next-line react-hooks/exhaustive-deps
       void loadTodayData();
     }
-    
+
     const intervalId = setInterval(() => void loadTodayData(), 10000);
     return () => clearInterval(intervalId);
   }, [token, loadTodayData]);
@@ -218,23 +239,34 @@ useEffect(() => {
 
     try {
       if (status === "RUNNING") {
-        await axios.post(`${BASE_URL}/api/v1/attendance/timer/stop`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          `${BASE_URL}/api/v1/attendance/timer/stop`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
       } else {
-        await axios.post(`${BASE_URL}/api/v1/attendance/timer/start`, {
-          taskName: currentTask.trim(),
-          projectName: selectedProject,
-        }, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await axios.post(
+          `${BASE_URL}/api/v1/attendance/timer/start`,
+          {
+            taskName: currentTask.trim(),
+            projectName: selectedProject,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         // mark activity immediately after starting the timer
         lastActivityRef.current = Date.now();
       }
       loadTodayData();
     } catch (err) {
       const axiosError = err as AxiosError<Record<string, unknown>>;
-      setError((axiosError?.response?.data as Record<string, unknown>)?.message as string || "Failed to start timer");
+      setError(
+        ((axiosError?.response?.data as Record<string, unknown>)
+          ?.message as string) || "Failed to start timer"
+      );
     }
   };
 
@@ -257,51 +289,70 @@ useEffect(() => {
       .toLowerCase();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <Card className="shadow-xl border-0">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-3">
-              <Clock className="w-10 h-10 text-blue-600" />
-              Work Tracker
-            </CardTitle>
-          </CardHeader>
-
-          <CardContent className="space-y-8">
-            {/* Main Timer */}
-            <div className="text-center bg-white rounded-2xl p-8 shadow-lg">
-              <div className="text-7xl font-mono font-bold text-gray-900 mb-6">
-                {formatTime(displaySeconds)}
+    <div className="flex bg-gray-50/50 justify-center pt-6 pb-10 px-4 min-h-[calc(100vh-4rem)]">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-xl self-start mt-2"
+      >
+        <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-xl ring-1 ring-black/5 overflow-hidden rounded-3xl">
+          {/* Header */}
+          <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-white/10 rounded-xl">
+                 <Timer className="w-5 h-5 text-blue-400" />
               </div>
-
-              <div className="bg-blue-50 rounded-xl py-4 px-8 inline-block">
-                <div className="text-lg text-gray-600 font-medium">
-                  Today's Total Working Time
-                </div>
-                <div className="text-4xl font-bold text-blue-600 mt-2">
-                  {formatTime(displaySeconds)}
-                </div>
-              </div>
-
-              <div className="mt-6 text-2xl font-semibold text-gray-700 capitalize">
-                {status === "RUNNING" ? "Tracking Active" : "Ready to Start"}
+              <div>
+                <h2 className="text-white font-medium tracking-tight">Time Tracker</h2>
+                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Daily Progress</p>
               </div>
             </div>
+            <motion.div 
+              animate={{ 
+                backgroundColor: status === "RUNNING" ? "rgba(34, 197, 94, 0.2)" : "rgba(255, 255, 255, 0.1)",
+                color: status === "RUNNING" ? "#4ade80" : "#94a3b8"
+              }}
+              className="px-3 py-1 rounded-full text-xs font-bold border border-white/5"
+            >
+              {status === "RUNNING" ? "ACTIVE" : "IDLE"}
+            </motion.div>
+          </div>
 
-            {/* Project & Task Input - Only when stopped */}
+          <CardContent className="p-6">
+            {/* Main Timer Display */}
+            <div className="text-center mb-8 relative">
+              <motion.div 
+                key={status}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="inline-block"
+              >
+                <div className={`text-6xl font-mono font-bold tracking-tighter tabular-nums ${
+                    status === 'RUNNING' ? 'text-blue-600' : 'text-slate-700'
+                  }`}>
+                  {formatTime(displaySeconds)}
+                </div>
+                <div className="text-sm text-slate-400 font-medium mt-1">Total Hours Today</div>
+              </motion.div>
+            </div>
+
+            {/* Controls */}
             {status !== "RUNNING" && (
-              <div className="space-y-4 max-w-md mx-auto">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Select Project <span className="text-red-500">*</span>
-                  </label>
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-4 mb-6"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase ml-1">Project</label>
                   <Select value={selectedProject} onValueChange={setSelectedProject}>
-                    <SelectTrigger className="py-6 text-lg">
-                      <SelectValue placeholder="Choose a project..." />
+                    <SelectTrigger className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500/20 rounded-xl">
+                      <SelectValue placeholder="Select a project..." />
                     </SelectTrigger>
                     <SelectContent>
                       {PROJECTS.map((proj) => (
-                        <SelectItem key={proj.id} value={proj.id}>
+                        <SelectItem key={proj.id} value={proj.name} className="focus:bg-blue-50">
                           {proj.name}
                         </SelectItem>
                       ))}
@@ -309,97 +360,119 @@ useEffect(() => {
                   </Select>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Task Name <span className="text-red-500">*</span>
-                  </label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-500 uppercase ml-1">Task Details</label>
                   <Input
-                    className="py-6 text-lg"
+                    className="h-11 bg-slate-50 border-slate-200 focus:ring-blue-500/20 rounded-xl"
                     placeholder="What are you working on?"
                     value={currentTask}
                     onChange={(e) => setCurrentTask(e.target.value)}
                   />
                 </div>
 
-                {error && (
-                  <div className="text-center text-red-600 font-medium bg-red-50 py-3 rounded-lg">
-                    {error}
-                  </div>
-                )}
-
-                <p className="text-center text-sm text-gray-500">
-                  This task will be used for all sessions today unless changed
-                </p>
-              </div>
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }} 
+                      className="text-xs font-medium text-red-500 bg-red-50 px-3 py-2 rounded-lg border border-red-100 flex items-center gap-2"
+                    >
+                      <span className="w-1 h-1 rounded-full bg-red-500" />
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             )}
 
-            {/* Start/Stop Button */}
-            <div className="flex justify-center">
+            {/* Action Button */}
+            <motion.div layout>
               <Button
-                size="lg"
-                className={`px-24 py-12 text-3xl font-bold rounded-full shadow-2xl transform hover:scale-105 transition-all ${
-                  status === "RUNNING"
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-green-500 hover:bg-green-600 text-white"
-                }`}
                 onClick={toggleTimer}
+                className={`w-full h-14 text-lg font-bold rounded-2xl shadow-lg shadow-blue-900/5 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${
+                  status === "RUNNING"
+                    ? "bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20"
+                    : "bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/20"
+                }`}
               >
-                {status === "RUNNING" ? (
-                  <>
-                    <Pause className="w-12 h-12 mr-4" />
-                    STOP
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-12 h-12 mr-4" />
-                    START
-                  </>
-                )}
+                  {status === "RUNNING" ? (
+                    <span className="flex items-center gap-2">
+                      <Pause className="w-5 h-5 fill-current" /> Stop Timer
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Play className="w-5 h-5 fill-current" /> Start Timer
+                    </span>
+                  )}
               </Button>
-            </div>
+            </motion.div>
 
-            <Separator />
+            <Separator className="my-8 opacity-50" />
 
-            {/* Sessions List */}
+            {/* Session History */}
             <div>
-              <h3 className="text-2xl font-semibold text-gray-800 text-center mb-6">
-                Today's Sessions
-              </h3>
-              {sessions.length === 0 ? (
-                <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">
-                  No sessions yet. Select project & task, then press START!
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {sessions.map((session: Session, index: number) => (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500"
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase className="w-4 h-4 text-slate-400" />
+                <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Recent Sessions</h3>
+              </div>
+              
+              <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                  {sessions.length === 0 ? (
+                    <motion.div 
+                      key="empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-8 border-2 border-dashed border-slate-100 rounded-2xl"
                     >
-                      <div>
-                        <div className="font-medium text-lg text-gray-800">
-                          {session.taskName || "Untitled Task"}
+                      <p className="text-slate-400 text-sm">No sessions recorded today</p>
+                    </motion.div>
+                  ) : (
+                    sessions.map((session, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all cursor-default"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1 p-1.5 rounded-full ${session.endTime ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                            {session.endTime ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-slate-800 group-hover:text-blue-700 transition-colors">
+                              {session.taskName || "Untitled Task"}
+                            </div>
+                            <div className="text-xs text-slate-500 font-medium mt-0.5">
+                              {formatTimeOnly(session.startTime)}
+                              <span className="mx-1 text-slate-300">•</span>
+                              {session.endTime ? formatTimeOnly(session.endTime) : <span className="text-green-500 font-bold">Running...</span>}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {formatTimeOnly(session.startTime)} -{" "}
-                          {session.endTime
-                            ? formatTimeOnly(session.endTime)
-                            : "Running"}
+                        <div className="text-right">
+                           <div className="text-sm font-bold font-mono text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                             {formatTime(Math.floor((session.durationMs || 0) / 1000))}
+                           </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {formatTime(Math.floor((session.durationMs || 0) / 1000))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      </motion.div>
+                    ))
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
+
           </CardContent>
         </Card>
-      </div>
+
+        {/* Footer/Copyright or extra info can go here to pad the bottom */}
+        <div className="mt-8 text-center">
+            <p className="text-xs text-slate-400 font-medium">✨ Keep up the good work!</p>
+        </div>
+
+      </motion.div>
     </div>
   );
 }

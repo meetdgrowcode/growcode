@@ -58,11 +58,15 @@ const PROJECTS: ProjectType[] = [
 
 // 🔥 Function to convert project id/number to name
 const getProjectName = (projectIdOrName: string): string => {
-  if (!projectIdOrName || projectIdOrName === "-" || projectIdOrName === "No Project") {
+  if (
+    !projectIdOrName ||
+    projectIdOrName === "-" ||
+    projectIdOrName === "No Project"
+  ) {
     return "";
   }
 
-  const project = PROJECTS.find(p => p.id === projectIdOrName);
+  const project = PROJECTS.find((p) => p.id === projectIdOrName);
   return project ? project.name : projectIdOrName;
 };
 
@@ -107,13 +111,17 @@ export default function TeamTrackerPage() {
     }
 
     try {
-      const res = await axios.get<ApiResponse>(`${BASE_URL}/api/v1/attendance/dashboard/admin`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get<ApiResponse>(
+        `${BASE_URL}/api/v1/attendance/dashboard/admin`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("Fetched team tracker data:", res.data);
 
       if (res.data.success) {
         const mapped = res.data.data.map((emp: Record<string, unknown>) => ({
-          _id: String(emp._id || ""),
+          _id: String(emp.employeeId || ""),
           name: String(emp.name || ""),
           email: String(emp.email || ""),
           projectName: String(emp.projectName || "-"),
@@ -121,10 +129,11 @@ export default function TeamTrackerPage() {
           totalTodaySeconds: Number(emp.totalTodaySeconds || 0),
           currentSessionSeconds: Number(emp.currentSessionSeconds || 0),
           yesterdaySeconds: Number(emp.yesterdaySeconds || 0),
-          thisWeekSeconds: Number(emp.thisWeekSeconds || 0),
+          thisWeekSeconds: Number(emp.thisWeekSeconds || 0),  
           thisMonthSeconds: Number(emp.thisMonthSeconds || 0),
           status: (emp.status as "Active" | "Idle" | "Offline") || "Offline",
         }));
+        console.log("Mapped team data:", mapped);
 
         const order: StatusOrder = { Active: 0, Idle: 1, Offline: 2 };
         mapped.sort((a: TeamMember, b: TeamMember) => {
@@ -143,12 +152,15 @@ export default function TeamTrackerPage() {
   /* ================= FETCH CURRENT IDLE LIMIT ================= */
   const fetchIdleLimit = useCallback(async (): Promise<void> => {
     try {
-      const res = await axios.get<IdleLimitResponse>(`${BASE_URL}/api/v1/admin/settings/idle-limit`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get<IdleLimitResponse>(
+        `${BASE_URL}/api/v1/admin/settings/idle-limit`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setIdleMinutes(res.data.idleLimitMinutes?.toString() || "");
     } catch (err) {
-      console.error("Failed to fetch idle limit", err);
+      console.error("Failed to fetch idle limit ", err);
     }
   }, [token]);
 
@@ -180,7 +192,8 @@ export default function TeamTrackerPage() {
       const axiosError = err as AxiosError<Record<string, unknown>>;
       console.error("Save idle limit error:", err);
       setSaveMessage(
-        (axiosError.response?.data as Record<string, unknown>)?.message as string || "Failed to save"
+        ((axiosError.response?.data as Record<string, unknown>)
+          ?.message as string) || "Failed to save"
       );
       setTimeout(() => setSaveMessage(""), 3000);
     } finally {
@@ -206,10 +219,7 @@ export default function TeamTrackerPage() {
           if (emp.status === "Active") {
             return {
               ...emp,
-              currentSessionSeconds: emp.currentSessionSeconds + 1,
-              totalTodaySeconds: emp.totalTodaySeconds + 1,
-              thisWeekSeconds: emp.thisWeekSeconds + 1,
-              thisMonthSeconds: emp.thisMonthSeconds + 1,
+                currentSessionSeconds: emp.currentSessionSeconds + 1,
             };
           }
           return emp;
@@ -223,9 +233,12 @@ export default function TeamTrackerPage() {
   const activeCount = teamData.filter((e) => e.status === "Active").length;
   const trackingCount = teamData.filter((e) => e.status !== "Offline").length;
 
-  const filteredData = teamData.filter((emp) =>
-    selectedProject === "All Projects" ||
-    getProjectName(emp.projectName).toLowerCase().includes(selectedProject.toLowerCase())
+  const filteredData = teamData.filter(
+    (emp) =>
+      selectedProject === "All Projects" ||
+      getProjectName(emp.projectName)
+        .toLowerCase()
+        .includes(selectedProject.toLowerCase())
   );
 
   return (
@@ -250,7 +263,8 @@ export default function TeamTrackerPage() {
                 Team Live Tracker
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                {activeCount} active • {trackingCount} tracking • {teamData.length} members
+                {activeCount} active • {trackingCount} tracking •{" "}
+                {teamData.length} members
               </p>
             </div>
 
@@ -260,7 +274,7 @@ export default function TeamTrackerPage() {
               </SelectTrigger>
               <SelectContent>
                 {projects.map((proj) => (
-                  <SelectItem key={proj} value={proj} className="text-sm">
+                  <SelectItem key={proj} value={proj} className="text-sm ">
                     {proj}
                   </SelectItem>
                 ))}
@@ -288,14 +302,20 @@ export default function TeamTrackerPage() {
                 {saving ? "Saving..." : "Save"}
               </Button>
               {saveMessage && (
-                <span className={`text-sm ml-4 ${saveMessage.includes("success") ? "text-green-600" : "text-red-600"}`}>
+                <span
+                  className={`text-sm ml-4 ${
+                    saveMessage.includes("success")
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {saveMessage}
                 </span>
               )}
             </div>
             <p className="text-xs text-gray-600 mt-2">
-              If employee is inactive for this many minutes, their timer will pause automatically.
-              Leave blank or 0 to disable.
+              If employee is inactive for this many minutes, their timer will
+              pause automatically. Leave blank or 0 to disable.
             </p>
           </CardContent>
         </Card>
@@ -303,13 +323,15 @@ export default function TeamTrackerPage() {
         {/* Employee Cards */}
         <div className="space-y-3">
           {loading ? (
-            Array(8).fill(0).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-4">
-                  <div className="h-20 bg-gray-200 rounded-lg" />
-                </CardContent>
-              </Card>
-            ))
+            Array(8)
+              .fill(0)
+              .map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-4">
+                    <div className="h-20 bg-gray-200 rounded-lg" />
+                  </CardContent>
+                </Card>
+              ))
           ) : filteredData.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-gray-500">
@@ -317,81 +339,141 @@ export default function TeamTrackerPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredData.map((emp) => (
-              <Card key={emp._id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    {/* Left - Employee Info */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <Avatar className="h-10 w-10 shrink-0">
-                        <AvatarFallback className="text-sm font-semibold bg-linear-to-br from-indigo-500 to-purple-600 text-white">
-                          {emp.name.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+            filteredData.map((emp) => {
+              return (
+                <Card
+                  key={emp._id}
+                  className="hover:shadow-md transition-shadow bg-white rounded-xl border border-gray-100"
+                >
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col xl:flex-row items-center justify-between gap-6 xl:gap-0">
+                      {/* Left - Employee Info (Avatar + Details + Status) */}
+                      <div className="flex items-center gap-4 w-full xl:w-auto">
+                        {/* Avatar */}
+                        <Avatar className="h-12 w-12 sm:h-14 sm:w-14 shrink-0">
+                          <AvatarFallback
+                            className={`text-base font-semibold text-white ${
+                              emp.status === "Active"
+                                ? "bg-purple-600"
+                                : "bg-purple-500/80"
+                            }`}
+                          >
+                            {emp.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
 
-                      <div className="flex-1">
-                        <Link to={`/admin/employee/${emp._id}`} className="block">
-                          <div className="flex items-center gap-4 hover:bg-gray-100 -m-2 p-2 rounded-lg transition cursor-pointer">
-                            <div>
-                              <h3 className="text-base font-semibold text-gray-900 hover:text-blue-600">
+                        {/* Name & Details */}
+                        <div className="flex flex-col gap-1 min-w-[200px]">
+                          <div className="flex items-center gap-3">
+                            <Link to={`/admin/employee/${emp._id}`}>
+                              <h3 className="text-base sm:text-lg font-bold text-gray-900 hover:text-blue-600 transition-colors">
                                 {emp.name}
                               </h3>
-                              <p className="text-xs text-gray-500">{emp.email}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${emp.status === "Active" ? "bg-green-500 animate-pulse" : emp.status === "Idle" ? "bg-yellow-500" : "bg-gray-400"}`} />
-                              <span className="text-xs text-gray-600 font-medium">{emp.status}</span>
+                            </Link>
+
+                            {/* Status Pill */}
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`w-2 h-2 rounded-full ${
+                                  emp.status === "Active"
+                                    ? "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"
+                                    : emp.status === "Idle"
+                                    ? "bg-yellow-400"
+                                    : "bg-gray-400"
+                                }`}
+                              />
+                              <span className="text-sm font-medium text-gray-500">
+                                {emp.status}
+                              </span>
                             </div>
                           </div>
-                        </Link>
 
-                        {emp.status !== "Offline" && (
-                          <p className="text-xs text-gray-700 mt-1">
-                            <span className="font-medium">{emp.taskName || "Untitled Task"}</span>
-                            {getProjectName(emp.projectName) && (
-                              <span className="text-blue-600"> • {getProjectName(emp.projectName)}</span>
-                            )}
-                          </p>
-                        )}
+                          <div className="text-sm text-gray-500 font-medium">
+                            {emp.email}
+                          </div>
 
-                        {emp.status === "Offline" && (
-                          <p className="text-xs text-gray-500 mt-1">Not tracking today</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right - Timers */}
-                    <div className="flex items-center gap-12">
-                      <div className="flex items-center gap-10">
-                        <div className="text-center">
-                          <p className="font-mono text-lg font-bold text-blue-600">{formatTime(emp.totalTodaySeconds)}</p>
-                          <p className="text-xs text-gray-600">Today</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-mono text-base font-semibold text-gray-800">{formatTime(emp.yesterdaySeconds)}</p>
-                          <p className="text-xs text-gray-600">Yesterday</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-mono text-base font-semibold text-gray-800">{formatTime(emp.thisWeekSeconds)}</p>
-                          <p className="text-xs text-gray-600">Week</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-mono text-base font-semibold text-gray-800">{formatTime(emp.thisMonthSeconds)}</p>
-                          <p className="text-xs text-gray-600">Month</p>
+                          {/* Last/Current Activity */}
+                          {emp.status !== "Offline" ? (
+                            <div className="text-sm text-gray-500 flex items-center gap-1.5 truncate max-w-[300px]">
+                            <span className="truncate">{emp.taskName || "Tracking"}</span>
+                             {getProjectName(emp.projectName) && (
+                                <>
+                                  <span className="text-gray-300">•</span>
+                                  <span className="text-blue-600 font-medium truncate">
+                                    {getProjectName(emp.projectName)}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400 italic">
+                              Not tracking today
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {emp.status === "Active" && (
-                        <div className="text-center">
-                          <p className="font-mono text-xl font-bold text-green-600">{formatTime(emp.currentSessionSeconds)}</p>
-                          <p className="text-xs text-green-700">Running</p>
+                      {/* Right - Time Stats Grid */}
+                      <div className="flex items-center justify-between w-full xl:w-auto xl:gap-12 lg:gap-8 gap-4 overflow-x-auto pb-2 xl:pb-0">
+                        {/* Today */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                          <span className="text-lg sm:text-xl font-bold text-blue-600 font-mono tracking-tight">
+                            {formatTime(emp.totalTodaySeconds)}
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                            Today
+                          </span>
                         </div>
-                      )}
+
+                        {/* Yesterday */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                          <span className="text-base sm:text-lg font-semibold text-gray-800 font-mono tracking-tight">
+                            {formatTime(emp.yesterdaySeconds)}
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                            Yesterday
+                          </span>
+                        </div>
+
+                        {/* Week */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                          <span className="text-base sm:text-lg font-semibold text-gray-800 font-mono tracking-tight">
+                            {formatTime(emp.thisWeekSeconds)}
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                            Week
+                          </span>
+                        </div>
+
+                        {/* Month */}
+                        <div className="flex flex-col items-center min-w-[80px]">
+                          <span className="text-base sm:text-lg font-semibold text-gray-800 font-mono tracking-tight">
+                            {formatTime(emp.thisMonthSeconds)}
+                          </span>
+                          <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                            Month
+                          </span>
+                        </div>
+
+                        {/* Running Timer */}
+                        <div className="flex flex-col items-center min-w-[90px]">
+                             <span className={`text-lg sm:text-xl font-bold font-mono tracking-tight ${emp.status === 'Active' ? 'text-green-500' : 'text-gray-800'}`}>
+                            {formatTime(emp.currentSessionSeconds)}
+                          </span>
+                          <span className={`text-xs font-medium uppercase tracking-wide ${emp.status === 'Active' ? 'text-green-600' : 'text-gray-500'}`}>
+                            Running
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </div>

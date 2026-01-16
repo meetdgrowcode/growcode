@@ -1,6 +1,6 @@
 
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import { api } from "@/lib/axios";
 
 import {
   Table,
@@ -16,7 +16,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 import EditUserModal from "@/components/admin/EditUserModal";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 
 type User = {
   _id: string;
@@ -24,7 +24,7 @@ type User = {
   email: string;
   role: "admin" | "employee";
   department: string;
-  salary?: number;
+  baseSalary?: number;
   isActive: boolean;
 };
 
@@ -39,9 +39,7 @@ export default function AdminUsers() {
   /* ================= FETCH ALL USERS ================= */
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/employee`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(`/api/v1/employee`);
 
       setUsers(res.data?.data ?? res.data ?? []);
     } catch (err) {
@@ -61,9 +59,7 @@ export default function AdminUsers() {
     try {
       setLoadingId(id);
 
-      await axios.delete(`${BASE_URL}/api/v1/employee/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/api/v1/employee/delete/${id}`);
 
       fetchUsers();
     } catch (err) {
@@ -97,7 +93,7 @@ export default function AdminUsers() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
-              <TableHead>Salary</TableHead>
+              <TableHead>Base Salary</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -120,7 +116,7 @@ export default function AdminUsers() {
                   <TableCell>{u.role}</TableCell>
                   <TableCell>{u.department}</TableCell>
                   <TableCell>
-                    {u.salary ? `₹${u.salary.toLocaleString()}` : "-"}
+                    {u.baseSalary ? `₹${u.baseSalary.toLocaleString()}` : "-"}
                   </TableCell>
 
                   <TableCell className="flex justify-end gap-2">

@@ -40,7 +40,7 @@ export default function AdminDashboardPage() {
   /* ================= FETCH PENDING LEAVES ================= */
   const fetchPendingLeaves = useCallback(async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/attendance/admin/pending-leaves`, {
+      const res = await axios.get(`${BASE_URL}/api/v1/leave/admin/leaves/pending`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPendingLeaves(res.data.data || []);
@@ -63,9 +63,9 @@ export default function AdminDashboardPage() {
   }, [token, fetchPendingLeaves]);
 
   /* ================= LEAVE ACTION ================= */
-  const handleLeaveAction = async (id: string, action: "approve" | "reject") => {
+  const handleLeaveAction = async (id: string, action: "APPROVED" | "REJECTED") => {
     try {
-      await axios.put(`${BASE_URL}/api/v1/attendance/admin/leave-action/${id}`, { action }, {
+      await axios.put(`${BASE_URL}/api/v1/leave/admin/leave-action/${id}`, { action }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchPendingLeaves();
@@ -108,6 +108,7 @@ export default function AdminDashboardPage() {
               <TableRow>
                 <TableHead>Employee</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>From</TableHead>
                 <TableHead>To</TableHead>
                 <TableHead>Reason</TableHead>
@@ -118,7 +119,7 @@ export default function AdminDashboardPage() {
             <TableBody>
               {pendingLeaves.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     No pending leave requests
                   </TableCell>
                 </TableRow>
@@ -133,20 +134,35 @@ export default function AdminDashboardPage() {
                       {leave.employeeId?.email ?? "-"}
                     </TableCell>
 
-                    <TableCell>{leave.date}</TableCell>
+                    <TableCell>
+                      {/* @ts-ignore */}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        // @ts-ignore
+                        leave.leaveType === 'PAID' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {/* @ts-ignore */}
+                        {leave.leaveType}
+                      </span>
+                    </TableCell>
+
+                    <TableCell>
+                       {/* @ts-ignore */}
+                      {leave.fromDate}
+                    </TableCell>
 
                     <TableCell>{leave.toDate}</TableCell>
 
                     <TableCell className="max-w-[220px] truncate">
-                      {leave.leaveReason}
+                      {/* @ts-ignore */}
+                      {leave.reason}
                     </TableCell>
 
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" onClick={() => handleLeaveAction(leave._id, "approve")}>
+                        <Button size="sm" onClick={() => handleLeaveAction(leave._id, "APPROVED")}>
                           Approve
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleLeaveAction(leave._id, "reject")}>
+                        <Button size="sm" variant="destructive" onClick={() => handleLeaveAction(leave._id, "REJECTED")}>
                           Reject
                         </Button>
                       </div>

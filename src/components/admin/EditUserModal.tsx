@@ -17,7 +17,9 @@ type User = {
   role: string;
   department: string;
   salary?: number;
+  baseSalary?: number;
   isActive: boolean;
+  
 };
 
 type Props = {
@@ -27,7 +29,11 @@ type Props = {
 };
 
 export default function EditUserModal({ user, onClose, onSuccess }: Props) {
-  const [form, setForm] = useState<User>({ ...user });
+  // Map baseSalary (from API) to salary (for form)
+  const [form, setForm] = useState<User>({ 
+    ...user, 
+    salary: user.baseSalary ?? user.salary 
+  });
   const [loading, setLoading] = useState(false);
 
   const token = localStorage.getItem("admin_token");

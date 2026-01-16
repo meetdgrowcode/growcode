@@ -63,7 +63,7 @@ export default function EmployeeDashboard() {
     if (!BASE_URL) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${BASE_URL}/api/v1/attendance/my-leaves`, {
+      const res = await axios.get(`${BASE_URL}/api/v1/leave/my-leaves`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
@@ -115,9 +115,10 @@ export default function EmployeeDashboard() {
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-300">
-              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Name</TableHead>
-              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Email</TableHead>
-              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Role</TableHead>
+              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Reason</TableHead>
+              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Type</TableHead>
+              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">From</TableHead>
+              <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">To</TableHead>
               <TableHead className="h-12 px-6 text-left align-middle font-medium text-gray-700 bg-white">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -125,7 +126,7 @@ export default function EmployeeDashboard() {
           <TableBody>
             {loading ? (
               <TableRow className="border-b border-gray-200">
-                <TableCell colSpan={4} className="h-24 text-center py-12">
+                <TableCell colSpan={5} className="h-24 text-center py-12">
                   <div className="inline-flex items-center gap-3 text-sm text-gray-600">
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
                     Loading leaves...
@@ -134,7 +135,7 @@ export default function EmployeeDashboard() {
               </TableRow>
             ) : leaves.length === 0 ? (
               <TableRow className="border-b border-gray-200">
-                <TableCell colSpan={4} className="h-40 text-center">
+                <TableCell colSpan={5} className="h-40 text-center">
                   <div className="flex flex-col items-center justify-center gap-3">
                     <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-gray-300">
                       <path d="M3 7h18M8 21V7a4 4 0 00-4-4" strokeWidth="1.5" />
@@ -148,11 +149,24 @@ export default function EmployeeDashboard() {
               leaves.map((l) => (
                 <TableRow key={l._id} className="border-b border-gray-200 hover:bg-gray-50">
                   <TableCell className="h-14 px-6 align-middle text-sm text-gray-900 font-medium">
-                    {l.leaveReason ? l.leaveReason.substring(0, 20) : "-"}
+                    {/* @ts-ignore */}
+                    {l.reason ? l.reason.substring(0, 20) : "-"}
+                  </TableCell>
+
+                  <TableCell className="h-14 px-6 align-middle text-sm">
+                    {/* @ts-ignore */}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                      // @ts-ignore
+                      l.leaveType === 'PAID' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {/* @ts-ignore */}
+                      {l.leaveType}
+                    </span>
                   </TableCell>
 
                   <TableCell className="h-14 px-6 align-middle text-sm text-gray-700">
-                    {l.date ? new Date(l.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
+                    {/* @ts-ignore */}
+                    {l.fromDate ? new Date(l.fromDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : "-"}
                   </TableCell>
 
                   <TableCell className="h-14 px-6 align-middle text-sm text-gray-700">
@@ -160,7 +174,8 @@ export default function EmployeeDashboard() {
                   </TableCell>
 
                   <TableCell className="h-14 px-6 align-middle text-sm">
-                    <LeaveStatusBadge status={l.leaveStatus} />
+                    {/* @ts-ignore */}
+                    <LeaveStatusBadge status={l.approvalStatus?.toLowerCase() || "pending"} />
                   </TableCell>
                 </TableRow>
               ))
