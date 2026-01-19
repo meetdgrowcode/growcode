@@ -296,13 +296,7 @@ export default function EmployeeLayout() {
 
           <div className="flex items-center gap-2 sm:gap-4">
              {/* Search - Hidden on mobile for space */}
-            <div className="hidden lg:flex items-center gap-2 border border-slate-200 bg-gray-50/50 rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all w-64">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input 
-                placeholder="Search..." 
-                className="bg-transparent text-sm outline-none w-full placeholder:text-slate-400 text-slate-700" 
-              />
-            </div>
+
 
             <button className="relative p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors" title="Notifications">
               <Bell className="h-5 w-5" />
@@ -315,11 +309,13 @@ export default function EmployeeLayout() {
                 className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-indigo-500/50 transition-all"
                 aria-expanded={userMenuOpen}
               >
-                <Avatar className="h-10 w-10 ring-2 ring-slate-700 shadow-sm">
+                <Avatar className="h-10 w-10 ring-2 ring-white shadow-lg shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
                   {profileImageUrl ? (
-                    <img src={profileImageUrl} alt={user?.name} className="h-full w-full rounded-full object-cover" />
+                    <img src={profileImageUrl} alt={user?.name} className="h-full w-full object-cover" />
                   ) : (
-                    getInitials(user?.name || "U")
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-sm tracking-wide shadow-inner">
+                      {getInitials(user?.name || "U")}
+                    </div>
                   )}
                 </Avatar>
               </button>
