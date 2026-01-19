@@ -120,8 +120,8 @@ export default function Payroll() {
     [rows]
   );
   
-  const totalEmployees = rows.length;
-  const processedEmployees = rows.filter((r) => r.salaryConfigured).length;
+  
+
 
   return (
     <div className="space-y-6">
@@ -164,159 +164,149 @@ export default function Payroll() {
                 Refresh
             </Button>
         </div>
+        <div className="flex items-center gap-4 bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+          <Input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="w-40 h-9 bg-transparent border-0 focus-visible:ring-0 text-slate-700 font-medium"
+          />
+        </div>
       </div>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+      {/* STATS CARDS */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Total Payout</div>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <h3 className="tracking-tight text-sm font-medium text-indigo-100">Total Payout</h3>
+            <IndianRupee className="h-4 w-4 text-indigo-100" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalPayout.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              For {new Date(month).toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </p>
+            <div className="text-2xl font-bold">₹ {totalPayout.toLocaleString()}</div>
+            <p className="text-xs text-indigo-200 mt-1">For {new Date(month).toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-             <div className="text-sm font-medium">Standard Working Hours</div>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{targetHours || "-"} hrs</div>
-             <p className="text-xs text-muted-foreground">
-              Base for salary calculation
-            </p>
-          </CardContent>
+        <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <h3 className="tracking-tight text-sm font-medium text-slate-500">Total Employees</h3>
+                <Users className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold text-slate-900">{rows.length}</div>
+                <p className="text-xs text-slate-400 mt-1">Active in current month</p>
+            </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Processed Employees</div>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {processedEmployees} / {totalEmployees}
-            </div>
-             <p className="text-xs text-muted-foreground">
-              {totalEmployees - processedEmployees} pending configuration
-            </p>
-          </CardContent>
+        <Card className="border border-slate-200 shadow-sm bg-white">
+             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <h3 className="tracking-tight text-sm font-medium text-slate-500">Global Target Hours</h3>
+                 <Clock className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+                 <div className="flex items-center gap-2">
+                     <Input 
+                        value={targetHours} 
+                        onChange={(e) => setTargetHours(e.target.value)} 
+                        className="h-8 w-24 text-lg font-bold border-0 p-0 bg-transparent focus-visible:ring-0 text-slate-900" 
+                     />
+                     <span className="text-xs text-slate-400">/ month</span>
+                 </div>
+                 <p className="text-xs text-slate-400 mt-1">Updates calculation for all</p>
+            </CardContent>
         </Card>
       </div>
 
-      {/* MAIN TABLE */}
-      <Card>
+      {/* PAYROLL TABLE */}
+      <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden">
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Base Salary</TableHead>
-                <TableHead className="text-center">Effective Hrs</TableHead>
-                <TableHead className="text-center">Worked Hrs</TableHead>
-                <TableHead className="text-center">Leaves</TableHead>
-                <TableHead>Adjustments</TableHead>
-                <TableHead className="text-right">Final Salary</TableHead>
+            <TableHeader>
+              <TableRow className="bg-slate-50 border-slate-100">
+                <TableHead className="w-[200px] uppercase text-xs font-semibold tracking-wider text-slate-500 pl-6">Employee</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Base Salary</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Target Hrs</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Worked Hrs</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Paid Leave</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Unpaid Leave</TableHead>
+                <TableHead className="uppercase text-xs font-semibold tracking-wider text-slate-500">Adjust Hours</TableHead>
+                <TableHead className="text-right uppercase text-xs font-semibold tracking-wider text-slate-500 pr-6">Final Salary</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {loading ? (
                  <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    Calculating payroll...
-                  </TableCell>
-                </TableRow>
+                    <TableCell colSpan={8} className="h-48 text-center text-slate-400">Loading payroll data...</TableCell>
+                 </TableRow>
               ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No employees found for this period.
-                  </TableCell>
-                </TableRow>
+                 <TableRow>
+                     <TableCell colSpan={8} className="h-48 text-center text-slate-400">No data for this month</TableCell>
+                 </TableRow>
               ) : (
-                rows.map((r) => (
-                  <TableRow key={r.employeeId}>
-                    <TableCell>
-                        <div className="font-medium">{r.name}</div>
-                        <div className="text-xs text-muted-foreground">ID: {r.employeeId.slice(-4)}</div>
-                    </TableCell>
-
-                    <TableCell>
-                      {r.baseSalary !== null ? `₹${r.baseSalary.toLocaleString()}` : <span className="text-destructive text-xs">Not Set</span>}
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                       <span className={r.effectiveMonthlyHours !== Number(targetHours) ? "text-orange-600 font-medium" : ""}>
-                           {r.effectiveMonthlyHours || "-"}
-                       </span>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                        <div className="font-mono">{r.workedHours.toFixed(2)}</div>
-                    </TableCell>
-
-                    <TableCell className="text-center">
-                      <div className="flex flex-col text-xs">
-                        <span className="text-green-600 font-medium">{r.paidLeaveCount || 0} Paid</span>
-                        <span className="text-red-500">{r.unpaidLeaveCount || 0} Unpaid</span>
+                rows.map((row) => (
+                  <TableRow key={row.employeeId} className="group hover:bg-slate-50 transition-colors border-slate-100">
+                    <TableCell className="font-medium text-slate-900 pl-6">
+                      {row.name}
+                      <div className="text-xs font-normal text-slate-400 mt-0.5">
+                         {row.salaryConfigured ? <span className="text-emerald-500">Configured</span> : <span className="text-amber-500">Salary Not Set</span>}
                       </div>
                     </TableCell>
-
+                    <TableCell className="text-slate-600">
+                      ₹ {row.baseSalary?.toLocaleString() ?? 0}
+                    </TableCell>
+                    <TableCell className="text-slate-500">
+                        {row.effectiveMonthlyHours} h
+                    </TableCell>
+                    <TableCell>
+                         <div className="flex flex-col">
+                            <span className="font-semibold text-slate-700">{row.workedHours.toFixed(2)} h</span>
+                            <span className="text-xs text-slate-400">Tracker Logged</span>
+                         </div>
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {row.paidLeaveCount ?? 0}
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {row.unpaidLeaveCount ?? 0}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Input
                           type="number"
-                          min="0"
-                          placeholder="+hrs"
-                          value={extraHours[r.employeeId] || ""}
+                          placeholder="Hours"
+                          className="h-8 w-20 bg-white border-slate-200 text-slate-700"
+                          value={extraHours[row.employeeId] || ""}
                           onChange={(e) =>
-                            setExtraHours((p) => ({
-                              ...p,
-                              [r.employeeId]: e.target.value,
+                            setExtraHours((prev) => ({
+                              ...prev,
+                              [row.employeeId]: e.target.value,
                             }))
                           }
-                          className="w-16 h-8 text-xs"
                         />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => addExtraHours(r.employeeId)}
-                          disabled={!extraHours[r.employeeId]}
-                          className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          Add
-                        </Button>
-                         <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeExtraHours(r.employeeId)}
-                          disabled={!extraHours[r.employeeId]}
-                          className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          Remove
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-5 text-[10px] px-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                onClick={() => addExtraHours(row.employeeId)}
+                            >
+                                + Add
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-5 text-[10px] px-2 text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => removeExtraHours(row.employeeId)}
+                            >
+                                - Rem
+                            </Button>
+                        </div>
                       </div>
                     </TableCell>
-
-                    <TableCell className="text-right">
-                      {r.salaryConfigured ? (
-                        <div className="font-bold text-green-700">
-                             ₹{r.salary?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-orange-500 font-medium">
-                          Config Incomplete
-                        </div>
-                      )}
+                    <TableCell className="text-right pr-6">
+                      <span className="inline-block px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-100">
+                        ₹ {row.salary?.toLocaleString() ?? 0}
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))

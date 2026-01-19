@@ -179,6 +179,7 @@ export default function TeamTrackerPage() {
         { idleLimitMinutes: Number(idleMinutes) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log("Idle limit response:", res.data);
 
       if (res.data.success) {
         setIdleMinutes(res.data.idleLimitMinutes?.toString() || "");

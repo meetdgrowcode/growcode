@@ -5,13 +5,13 @@ import {
   Menu as IconMenu,
   Home,
   Users,
-  Settings,
   LogOut,
   Bell,
   Search,
   X,
   Clock,
   DollarSign,
+  Briefcase,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -25,12 +25,14 @@ type NavItem = {
   icon: React.ReactNode;
 };
 
+
+
 const NAV: NavItem[] = [
   { key: "home", label: "Overview", to: "/admin", icon: <Home className="h-5 w-5" /> },
   { key: "users", label: "Users", to: "/admin/users", icon: <Users className="h-5 w-5" /> },
+  { key: "projects", label: "Projects", to: "/admin/projects", icon: <Briefcase className="h-5 w-5" /> }, // New Project Link
   { key: "tracker", label: "Tracker", to: "/admin/tracker", icon: <Clock className="h-5 w-5" /> }, // ← New Tracker link with Clock icon
   { key: "payroll", label: "Payroll", to: "/admin/payroll", icon: <DollarSign className="h-5 w-5" /> },
-  { key: "settings", label: "Settings", to: "/admin/settings", icon: <Settings className="h-5 w-5" /> },
 ];
 
 export default function AdminLayout(): JSX.Element {
@@ -111,81 +113,123 @@ export default function AdminLayout(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-white">
       {/* Sidebar */}
       <aside
         className={
-          "hidden md:flex md:flex-col border-r border-slate-100 bg-white transition-all duration-200 " +
+          "hidden md:flex md:flex-col border-r border-slate-200 bg-white text-slate-600 transition-all duration-300 ease-in-out shadow-xl z-20 " +
           (collapsed ? "md:w-20" : "md:w-72")
         }
       >
-        {/* TOP: when collapsed show only 3-line icon; when expanded show logo+title + toggle */}
-        <div className="flex items-center justify-between px-3 py-3">
+        {/* TOP: Logo & Toggle */}
+        <div className="flex items-center justify-between px-4 py-5 h-20 border-b border-slate-100">
           {collapsed ? (
-            // COLLAPSED -> show only menu icon centered-left
-            <button
-              aria-label="Expand sidebar"
-              onClick={() => setCollapsed(false)}
-              className="rounded p-2 hover:bg-slate-100"
-              title="Expand"
-            >
-              <IconMenu className="h-5 w-5 text-slate-600" />
-            </button>
+             <div className="mx-auto">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20">
+                  G
+                </div>
+             </div>
           ) : (
-            // EXPANDED -> show full header with logo + toggle button (which collapses)
             <>
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/30">
                   G
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">GrowCode</div>
-                  <div className="text-xs text-slate-500">Admin panel</div>
+                  <div className="text-base font-bold text-slate-800 tracking-tight">GrowCode</div>
+                  <div className="text-xs text-slate-500 font-medium tracking-wide uppercase">Admin Panel</div>
                 </div>
               </div>
-
-              <button
-                aria-label="Collapse sidebar"
-                onClick={() => setCollapsed(true)}
-                className="rounded p-2 hover:bg-slate-100"
-                title="Collapse"
-              >
-                <IconMenu className="h-5 w-5 text-slate-600" />
-              </button>
             </>
           )}
+           {!collapsed && (
+              <button
+                onClick={() => setCollapsed(true)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <IconMenu className="h-5 w-5" />
+              </button>
+           )}
         </div>
+        
+        {collapsed && (
+             <div className="flex justify-center py-4 border-b border-slate-100">
+                <button
+                    onClick={() => setCollapsed(false)}
+                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                    <IconMenu className="h-5 w-5" />
+                </button>
+             </div>
+        )}
 
         {/* NAV LINKS */}
-        <div className="px-2">
-          <NavLinks />
+        <div className="px-3 py-6 flex-1 overflow-y-auto scrollbar-hide">
+           <nav className="flex flex-col gap-1.5">
+            {NAV.map((n) => {
+              const isActive = location.pathname === n.to;
+              return (
+                <Link
+                  key={n.key}
+                  to={n.to}
+                  title={collapsed ? n.label : undefined}
+                  className={
+                    "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 " +
+                    (isActive
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 ring-1 ring-indigo-600"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900") +
+                      (collapsed ? " justify-center" : "")
+                  }
+                >
+                  <span
+                    className={
+                      (isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600") + 
+                      " transition-colors"
+                    }
+                  >
+                    {/* Clone element to enforce size if needed, or just render */}
+                    {n.icon}
+                  </span>
+
+                  {/* only show label when not collapsed */}
+                  {!collapsed && <span className="truncate">{n.label}</span>}
+                  
+                  {isActive && !collapsed && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-300 shadow-glow animate-pulse" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* BOTTOM: when collapsed show only logout icon; when expanded show avatar + logout button */}
-        <div className="mt-auto px-2 py-4">
+        {/* BOTTOM: User Profile */}
+        <div className="mt-auto border-t border-slate-100 p-4 bg-gray-50/50">
           {collapsed ? (
-            <div className="flex flex-col items-center">
-              <button
-                aria-label="Logout"
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-9 w-9 ring-2 ring-white shadow-sm">
+                <img src="/logo.png" alt="Admin" />
+              </Avatar>
+               <button
                 onClick={handleLogout}
-                className="rounded-md p-2 hover:bg-red-50 text-red-600"
+                className="rounded-lg p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
                 title="Logout"
               >
                 <LogOut className="h-5 w-5" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9">
+            <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+              <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
                 <img src="/logo.png" alt="Admin" />
               </Avatar>
 
-              <div className="flex-1">
-                <div className="text-sm font-medium">Admin</div>
-                <div className="text-xs text-slate-500">you@company.com</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-slate-800 truncate">Administrator</div>
+                <div className="text-xs text-slate-500 truncate">admin@growcode.com</div>
               </div>
 
-              <Button onClick={handleLogout} variant="ghost" className="text-red-600 p-2" title="Logout">
+              <Button onClick={handleLogout} variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
@@ -194,89 +238,110 @@ export default function AdminLayout(): JSX.Element {
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col h-screen overflow-hidden">
         {/* Mobile Topbar */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b px-4 py-3">
-          <button onClick={() => setOpen(true)} className="p-2 rounded-md">
-            <IconMenu className="h-5 w-5" />
-          </button>
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+             <button onClick={() => setOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600">
+                <IconMenu className="h-6 w-6" />
+             </button>
+             <span className="font-bold text-gray-800 tracking-tight">GrowCode Admin</span>
+          </div>
 
-          <div className="font-semibold">GrowCode Admin</div>
-
-          <button className="p-2 rounded-md">
-            <Bell className="h-5 w-5" />
+          <button className="p-2 rounded-full hover:bg-gray-100 relative">
+            <Bell className="h-5 w-5 text-gray-600" />
+            <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
           </button>
         </header>
 
         {/* Mobile Drawer */}
         {open && (
-          <div className="fixed inset-0 z-40 flex">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-            <div className="relative z-50 w-72 h-full bg-white shadow-xl p-4 flex flex-col">
-              <div className="flex items-center justify-between border-b pb-3">
+            <div className="relative z-50 w-72 h-full bg-[#0F172A] shadow-2xl flex flex-col transform transition-transform duration-300">
+              <div className="flex items-center justify-between px-6 py-6 border-b border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-md bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                  <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
                     G
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold">GrowCode</div>
-                    <div className="text-xs text-slate-500">Admin</div>
-                  </div>
+                  <span className="text-lg font-bold text-white">GrowCode</span>
                 </div>
-
-                <button onClick={() => setOpen(false)}>
-                  <X className="h-5 w-5 text-slate-600" />
+                <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
-              <div className="mt-4 flex-1 overflow-y-auto">
-                <NavLinks onClick={() => setOpen(false)} />
+              <div className="flex-1 overflow-y-auto py-6 px-4">
+                 <nav className="space-y-1">
+                    {NAV.map((n) => (
+                         <Link
+                          key={n.key}
+                          to={n.to}
+                          onClick={() => setOpen(false)}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                              location.pathname === n.to 
+                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/20" 
+                              : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`}
+                        >
+                          {n.icon}
+                          {n.label}
+                        </Link>
+                    ))}
+                 </nav>
               </div>
 
-              <div className="border-t pt-4">
+              <div className="p-4 border-t border-slate-800 bg-[#0B1120]">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <img src="/logo.png" alt="Admin" />
-                  </Avatar>
-
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">Admin</div>
-                    <div className="text-xs text-slate-500">you@company.com</div>
-                  </div>
-
-                  <Button onClick={() => { setOpen(false); handleLogout(); }} variant="ghost" className="text-red-600 p-2">
-                    <LogOut className="h-4 w-4" />
-                  </Button>
+                    <Avatar className="h-10 w-10 ring-2 ring-slate-700">
+                        <img src="/logo.png" alt="Admin" />
+                    </Avatar>
+                    <div className="flex-1">
+                        <div className="text-white font-medium text-sm">Admin</div>
+                        <div className="text-slate-500 text-xs">admin@growcode.com</div>
+                    </div>
+                    <button onClick={() => { setOpen(false); handleLogout(); }} className="text-slate-400 hover:text-red-400">
+                        <LogOut className="h-5 w-5" />
+                    </button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Desktop header */}
-        <div className="hidden md:flex items-center justify-between border-b bg-white px-8 py-6">
+        {/* Desktop Sticky Header */}
+        <div className="hidden md:flex items-center justify-between border-b border-gray-200 bg-white/90 backdrop-blur-md px-8 py-4 sticky top-0 z-10 text-slate-800 shadow-sm">
           <div>
-            <h2 className="text-lg font-semibold">Admin dashboard</h2>
-            <p className="text-sm text-slate-500">Overview of recent activity</p>
+            <h2 className="text-xl font-bold tracking-tight text-slate-800">Admin Dashboard</h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Overview of ecosystem</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-2 border px-3 py-1 rounded-md bg-white">
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-2 border border-gray-200 bg-gray-50/50 rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all w-64">
               <Search className="h-4 w-4 text-slate-400" />
-              <input placeholder="Search..." className="bg-transparent text-sm outline-none w-56" />
+              <input 
+                placeholder="Search anything..." 
+                className="bg-transparent text-sm outline-none w-full placeholder:text-slate-400 text-slate-700" 
+              />
             </div>
+            
 
-            <Bell className="h-5 w-5 text-slate-600" />
-            <Avatar className="h-8 w-8">
-              <img src="/logo.png" alt="Admin" />
-            </Avatar>
+
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition-colors relative">
+                    <Bell className="h-5 w-5" />
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                </button>
+            </div>
           </div>
         </div>
 
         {/* Page content */}
-        <main className={"flex-1 overflow-y-auto p-4 md:p-8 transition-all duration-200 " + (collapsed ? "md:pl-6" : "md:pl-8")}>
-          <Outlet />
+        <main className="flex-1 overflow-y-auto bg-white p-4 md:p-8 scroll-smooth">
+          <div className="max-w-[1600px] mx-auto animate-in fade-in duration-500">
+              <Outlet />
+          </div>
         </main>
       </div>
     </div>

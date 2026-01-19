@@ -25,7 +25,7 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 type Status = "STOPPED" | "RUNNING";
 
 type Project = {
-  id: string;
+  _id: string;
   name: string;
 };
 
@@ -36,13 +36,6 @@ type Session = {
   durationMs: number;
 };
 
-const PROJECTS: Project[] = [
-  { id: "1", name: "Growcode HRMS" },
-  { id: "2", name: "Client Dashboard" },
-  { id: "3", name: "Mobile App Development" },
-  { id: "4", name: "Internal Tools" },
-  { id: "5", name: "Marketing Website" },
-];
 
 export default function EmployeeTracker() {
   const [status, setStatus] = useState<Status>("STOPPED");
@@ -51,15 +44,40 @@ export default function EmployeeTracker() {
   const [lastSyncTime, setLastSyncTime] = useState<number>(() => Date.now());
   const [sessions, setSessions] = useState<Session[]>([]);
 
+  // Projects state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [currentTask, setCurrentTask] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const lastActivityRef = useRef<number>(0);
+  const lastActivityRef = useRef<number>(Date.now());
   const isInitialMount = useRef<boolean>(true);
 
   const [idleMinutes, setIdleMinutes] = useState<number>(0);
 
   const token = localStorage.getItem("employeeToken");
+
+  /* ================= FETCH PROJECTS ================= */
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchProjects = async () => {
+      setProjectsLoading(true);
+      try {
+        // Fetch only active projects
+        const res = await axios.get(`${BASE_URL}/api/v1/attendance/projects?status=active`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProjects(res.data?.projects || []);
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+    fetchProjects();
+  }, [token]);
 
   /* ================= LOAD TODAY DATA ================= */
   const loadTodayData = useCallback(async (): Promise<void> => {
@@ -94,9 +112,9 @@ export default function EmployeeTracker() {
 
         setStatus(newStatus);
         // ensure idle tracker starts from now when timer is running
-        if (newStatus === "RUNNING") {
-          lastActivityRef.current = Date.now();
-        }
+        // if (newStatus === "RUNNING") {
+        //   lastActivityRef.current = Date.now();
+        // }
         setBaseSeconds(syncedSeconds);
         setLastSyncTime(Date.now());
         setDisplaySeconds(syncedSeconds);
@@ -124,7 +142,9 @@ export default function EmployeeTracker() {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        console.log("Idle limit response:", res.data);
         const minutes = Number(res.data.idleLimitMinutes);
+        console.log("Idle limit minutes:", minutes);
         setIdleMinutes(minutes > 0 ? minutes : 0);
       } catch (err) {
         console.error("Failed to fetch idle limit", err);
@@ -139,15 +159,25 @@ export default function EmployeeTracker() {
   useEffect(() => {
     if (status !== "RUNNING" || idleMinutes === 0) return;
 
-    const resetActivity = (): void => {
+    // Reset activity timer when monitoring starts
+    lastActivityRef.current = Date.now();
+
+    const resetActivity = (e: Event): void => {
+      // Log non-noisy events to debug spontaneous resets
+      if (e.type !== "mousemove" && e.type !== "scroll" && e.type !== "wheel" && e.type !== "touchmove") {
+        console.log(`[Autopause] Activity reset by: ${e.type}`);
+      }
       lastActivityRef.current = Date.now();
     };
 
     const checkIdle = async (): Promise<void> => {
       const idleTimeMs = Date.now() - lastActivityRef.current;
       const idleLimitMs = idleMinutes * 60 * 1000;
+      
+      console.log(`[Autopause] Status: ${Math.floor(idleTimeMs / 1000)}s / ${idleMinutes * 60}s`);
 
       if (idleTimeMs >= idleLimitMs) {
+        console.log("[Autopause] Threshold reached! Stopping timer...");
         try {
           await axios.post(
             `${BASE_URL}/api/v1/attendance/timer/stop`,
@@ -156,6 +186,7 @@ export default function EmployeeTracker() {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
+          console.log("[Autopause] Timer stopped successfully.");
           loadTodayData();
         } catch (err) {
           console.error("Secret auto-stop failed", err);
@@ -166,7 +197,6 @@ export default function EmployeeTracker() {
     const events = [
       "mousemove",
       "mousedown",
-      // include more keyboard/input events so typing counts as activity
       "keydown",
       "keypress",
       "keyup",
@@ -180,13 +210,13 @@ export default function EmployeeTracker() {
     ];
 
     events.forEach((e) =>
-      window.addEventListener(e, resetActivity, { passive: true })
+      document.addEventListener(e, resetActivity, { passive: true, capture: true })
     );
 
     const interval = setInterval(checkIdle, 5000);
 
     return () => {
-      events.forEach((e) => window.removeEventListener(e, resetActivity));
+      events.forEach((e) => document.removeEventListener(e, resetActivity));
       clearInterval(interval);
     };
   }, [status, idleMinutes, token, loadTodayData]);
@@ -289,7 +319,7 @@ export default function EmployeeTracker() {
       .toLowerCase();
 
   return (
-    <div className="flex bg-gray-50/50 justify-center pt-6 pb-10 px-4 min-h-[calc(100vh-4rem)]">
+    <div className="flex bg-gray-50/50 justify-center pt-6 pb-10 px-4 w-full h-full">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -297,7 +327,7 @@ export default function EmployeeTracker() {
       >
         <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-xl ring-1 ring-black/5 overflow-hidden rounded-3xl">
           {/* Header */}
-          <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+          <div className="bg-slate-900 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-white/10 rounded-xl">
                  <Timer className="w-5 h-5 text-blue-400" />
@@ -327,7 +357,7 @@ export default function EmployeeTracker() {
                 animate={{ scale: 1, opacity: 1 }}
                 className="inline-block"
               >
-                <div className={`text-6xl font-mono font-bold tracking-tighter tabular-nums ${
+                <div className={`text-5xl md:text-6xl font-mono font-bold tracking-tighter tabular-nums ${
                     status === 'RUNNING' ? 'text-blue-600' : 'text-slate-700'
                   }`}>
                   {formatTime(displaySeconds)}
@@ -351,11 +381,17 @@ export default function EmployeeTracker() {
                       <SelectValue placeholder="Select a project..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {PROJECTS.map((proj) => (
-                        <SelectItem key={proj.id} value={proj.name} className="focus:bg-blue-50">
-                          {proj.name}
+                      {projects.length === 0 ? (
+                        <SelectItem value="none" disabled>
+                          {projectsLoading ? "Loading projects..." : "No active projects"}
                         </SelectItem>
-                      ))}
+                      ) : (
+                        projects.map((proj) => (
+                          <SelectItem key={proj._id} value={proj.name} className="focus:bg-blue-50 bg-white ">
+                            {proj.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -437,12 +473,12 @@ export default function EmployeeTracker() {
                         transition={{ delay: index * 0.05 }}
                         className="group flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all cursor-default"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 p-1.5 rounded-full ${session.endTime ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className={`mt-1 p-1.5 rounded-full flex-shrink-0 ${session.endTime ? 'bg-slate-100 text-slate-400' : 'bg-blue-100 text-blue-600'}`}>
                             {session.endTime ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
                           </div>
-                          <div>
-                            <div className="text-sm font-medium text-slate-800 group-hover:text-blue-700 transition-colors">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-800 group-hover:text-blue-700 transition-colors truncate">
                               {session.taskName || "Untitled Task"}
                             </div>
                             <div className="text-xs text-slate-500 font-medium mt-0.5">
@@ -452,7 +488,7 @@ export default function EmployeeTracker() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0 ml-2">
                            <div className="text-sm font-bold font-mono text-slate-700 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
                              {formatTime(Math.floor((session.durationMs || 0) / 1000))}
                            </div>

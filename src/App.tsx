@@ -30,6 +30,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import AdminDashboardPage from "@/pages/admin/AdminDashboard";
 import AdminProtectedRoute from "@/routes/AdminProtectedRoute";
 import AdminUsersPage from "@/pages/admin/AdminUsers";
+import AdminProjects from "@/pages/admin/AdminProjects";
 
 import EmployeeDashboard from "@/pages/employee/EmployeeDashboard";
 import EmployeeProtectedRoute from "@/routes/EmployeeProtectedRoute";
@@ -82,6 +83,7 @@ function AppContent() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<AdminUsersPage />} />
+              <Route path="projects" element={<AdminProjects />} />
               <Route path="tracker" element={<TeamTrackerPage />} />
               <Route path="payroll" element={<Payroll />} />
               {/* 👈 અહીં add કર્યું Employee Detail Page */}

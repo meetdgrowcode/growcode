@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import {
@@ -11,7 +11,8 @@ import {
   TableCell,
   TableHead,
 } from "@/components/ui/Table";
-import { Plus, Clock } from "lucide-react";
+import { UserPlus, ClipboardList, Calendar, CheckCircle2 } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
 import CreateUserModal from "@/components/admin/CreateUserModal";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -20,18 +21,21 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 type Leave = {
   _id: string;
-  date: string;
+  fromDate: string;
   toDate: string;
-  leaveReason: string;
+  reason: string;
+  leaveType: string;
   employeeId: {
-    name?: string;
-    email?: string;
+    name: string;
+    email: string;
+    profilePic?: string;
   } | null;
 };
 
 /* ================= COMPONENT ================= */
 
 export default function AdminDashboardPage() {
+  const navigate = useNavigate();
   const [pendingLeaves, setPendingLeaves] = useState<Leave[]>([]);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -74,95 +78,130 @@ export default function AdminDashboardPage() {
     }
   };
 
-  /* ================= CALCULATIONS ================= */
-
   return (
-    <div className="space-y-10">
-      {/* ================= HEADER ================= */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <div className="flex gap-3">
-          {/* ← Tracker Link Added */}
-          <Link to="/admin/tracker">
-            <Button variant="outline" className="gap-2">
-              <Clock className="h-4 w-4" />
-              View Tracker
+    <div className="space-y-8 max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-gray-200">
+         <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              Dashboard
+            </h1>
+            <p className="text-base text-slate-500 mt-2">
+              Overview of your employee management ecosystem.
+            </p>
+         </div>
+         <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              className="h-10 px-4 gap-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-medium" 
+              onClick={() => navigate("/admin/tracker")}
+            >
+               <ClipboardList className="h-4 w-4 text-slate-500" />
+               View Tracker
             </Button>
-          </Link>
-          <Button onClick={() => setShowCreate(true)} variant="default" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Employee
-          </Button>
-        </div>
+            <Button 
+              className="h-10 px-5 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 font-semibold" 
+              onClick={() => setShowCreate(true)}
+            >
+               <UserPlus className="h-4 w-4" />
+               Add Employee
+            </Button>
+         </div>
       </div>
 
-      {/* ================= LEAVE APPROVAL ================= */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pending Leave Requests</CardTitle>
+      <Card className="border border-slate-200 shadow-lg shadow-slate-200/50 bg-white rounded-xl overflow-hidden">
+        <CardHeader className="border-b border-gray-100 p-6 bg-white">
+          <CardTitle className="flex items-center gap-3 text-lg font-bold text-slate-800">
+             <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100">
+                <Calendar className="h-5 w-5" />
+             </div>
+             Pending Requests
+          </CardTitle>
         </CardHeader>
-
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>To</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+              <TableRow className="bg-slate-50 hover:bg-slate-50 border-gray-100">
+                <TableHead className="w-[250px] py-4 pl-8 text-xs font-semibold uppercase tracking-wider text-slate-500">Employee</TableHead>
+                <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Leave Type</TableHead>
+                <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Durations</TableHead>
+                <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Reason</TableHead>
+                <TableHead className="py-4 pr-8 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">Actions</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {pendingLeaves.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
-                    No pending leave requests
+                  <TableCell colSpan={5} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3 text-slate-400">
+                       <div className="p-4 rounded-full bg-slate-50 ring-1 ring-slate-100">
+                          <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                       </div>
+                       <div className="space-y-1">
+                          <p className="font-semibold text-slate-900">No pending requests</p>
+                          <p className="text-sm">You're all caught up!</p>
+                       </div>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 pendingLeaves.map((leave) => (
-                  <TableRow key={leave._id}>
-                    <TableCell className="font-medium">
-                      {leave.employeeId?.name ?? "Deleted Employee"}
+                  <TableRow key={leave._id} className="group hover:bg-slate-50 transition-colors border-gray-100">
+                    <TableCell className="pl-8 py-4">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
+                          {leave.employeeId?.profilePic ? (
+                            <img src={`${import.meta.env.VITE_BASE_URL}${leave.employeeId.profilePic}`} alt={leave.employeeId.name} className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm border border-indigo-100">
+                               {leave.employeeId?.name?.charAt(0)}
+                            </div>
+                          )}
+                        </Avatar>
+                        <div>
+                           <p className="font-semibold text-slate-900">{leave.employeeId?.name}</p>
+                           <p className="text-xs text-slate-500">{leave.employeeId?.email}</p>
+                        </div>
+                      </div>
                     </TableCell>
-
-                    <TableCell>
-                      {leave.employeeId?.email ?? "-"}
-                    </TableCell>
-
-                    <TableCell>
-                      {/* @ts-ignore */}
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        // @ts-ignore
-                        leave.leaveType === 'PAID' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                    <TableCell className="py-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold border shadow-sm ${
+                        leave.leaveType === 'Medical'
+                          ? 'bg-red-50 text-red-700 border-red-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
                       }`}>
-                        {/* @ts-ignore */}
                         {leave.leaveType}
                       </span>
                     </TableCell>
-
-                    <TableCell>
-                       {/* @ts-ignore */}
-                      {leave.fromDate}
+                    <TableCell className="text-slate-600 font-medium text-sm py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="bg-slate-50 px-2 py-1 rounded text-xs font-mono text-slate-700 border border-slate-100">
+                           {leave.fromDate ? new Date(leave.fromDate).toLocaleDateString() : 'N/A'}
+                        </span>
+                        <span className="text-slate-400">→</span>
+                        <span className="bg-slate-50 px-2 py-1 rounded text-xs font-mono text-slate-700 border border-slate-100">
+                           {leave.toDate ? new Date(leave.toDate).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
                     </TableCell>
-
-                    <TableCell>{leave.toDate}</TableCell>
-
-                    <TableCell className="max-w-[220px] truncate">
-                      {/* @ts-ignore */}
-                      {leave.reason}
+                    <TableCell className="max-w-[200px] py-4">
+                        <p className="truncate text-slate-500 text-sm pl-0.5" title={leave.reason}>{leave.reason}</p>
                     </TableCell>
-
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-8 py-4">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" onClick={() => handleLeaveAction(leave._id, "APPROVED")}>
+                        <Button
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all h-9 px-4 rounded-lg font-medium"
+                            onClick={() => handleLeaveAction(leave._id, "APPROVED")}
+                        >
                           Approve
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleLeaveAction(leave._id, "REJECTED")}>
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-9 px-4 rounded-lg shadow-sm hover:shadow-md transition-all font-medium"
+                            onClick={() => handleLeaveAction(leave._id, "REJECTED")}
+                        >
                           Reject
                         </Button>
                       </div>
@@ -175,12 +214,14 @@ export default function AdminDashboardPage() {
         </CardContent>
       </Card>
 
+      {/* Modals */}
       {showCreate && (
         <CreateUserModal
           onClose={() => setShowCreate(false)}
           onSuccess={() => window.location.reload()}
         />
       )}
+      </div>
     </div>
   );
 }
