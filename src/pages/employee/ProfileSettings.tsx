@@ -50,12 +50,13 @@ export default function ProfileSettings() {
           designation: userData.designation || "",
         });
         if (userData.profilePic) {
-          setPreviewImage(`${BASE_URL}${userData.profilePic}`);
+          const isAbsolute = userData.profilePic.startsWith("http");
+          setPreviewImage(isAbsolute ? userData.profilePic : `${BASE_URL}${userData.profilePic}`);
         }
       }
     } catch (err) {
       console.error("Failed to load profile", err);
-      alert("Failed to load profile");
+      // Fallback silently or show toast handled by UI
     } finally {
       setLoading(false);
     }
@@ -201,6 +202,10 @@ export default function ProfileSettings() {
                       src={previewImage}
                       alt="Profile"
                       className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        setPreviewImage(null); // Fallback to initials
+                      }}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-slate-100 text-slate-400 font-bold text-4xl">

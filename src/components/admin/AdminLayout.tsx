@@ -207,8 +207,10 @@ export default function AdminLayout(): JSX.Element {
         <div className="mt-auto border-t border-slate-100 p-4 bg-gray-50/50">
           {collapsed ? (
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-9 w-9 ring-2 ring-white shadow-sm">
-                <img src="/logo.png" alt="Admin" />
+              <Avatar className="h-9 w-9 ring-2 ring-white shadow-lg shadow-indigo-500/20 transition-transform duration-200 hover:scale-105 cursor-pointer">
+                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-xs">
+                    GL
+                 </div>
               </Avatar>
                <button
                 onClick={handleLogout}
@@ -219,9 +221,11 @@ export default function AdminLayout(): JSX.Element {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-              <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
-                <img src="/logo.png" alt="Admin" />
+            <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md hover:border-indigo-100 group">
+              <Avatar className="h-10 w-10 ring-2 ring-white shadow-lg shadow-indigo-500/20 transition-transform duration-200 group-hover:scale-105">
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-sm">
+                    GL
+                </div>
               </Avatar>
 
               <div className="flex-1 min-w-0">
@@ -318,13 +322,7 @@ export default function AdminLayout(): JSX.Element {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center gap-2 border border-gray-200 bg-gray-50/50 rounded-full px-4 py-1.5 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all w-64">
-              <Search className="h-4 w-4 text-slate-400" />
-              <input 
-                placeholder="Search anything..." 
-                className="bg-transparent text-sm outline-none w-full placeholder:text-slate-400 text-slate-700" 
-              />
-            </div>
+
             
 
 
