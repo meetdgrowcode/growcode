@@ -37,12 +37,12 @@ export default function PortfolioDetailPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* HERO (same white background as before) */}
-      <section className="border-b bg-white">
-        <div className="mx-auto w-full max-w-6xl px-4 pt-16 pb-10 md:px-6 lg:px-8">
+      {/* HERO */}
+      <section className="border-b bg-gradient-to-br from-blue-50 via-white to-sky-50">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-10 pb-10 md:px-6 lg:px-8">
           <Link
             to="/portfolio"
-            className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
           >
             <ArrowLeft className="mr-1 h-3.5 w-3.5" />
             Back to portfolio
@@ -52,13 +52,13 @@ export default function PortfolioDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 to={`/portfolio/${prevProject.slug}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs md:text-sm text-gray-700 hover:bg-gray-50 hover:border-blue-300 transition"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs md:text-sm text-gray-700 hover:bg-gray-50 hover:border-blue-300 transition shadow-sm"
               >
                 ◀ Previous
               </Link>
               <Link
                 to={`/portfolio/${nextProject.slug}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs md:text-sm text-gray-700 hover:bg-gray-50 hover:border-blue-300 transition"
+                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs md:text-sm text-gray-700 hover:bg-gray-50 hover:border-blue-300 transition shadow-sm"
               >
                 Next ▶
               </Link>
@@ -77,11 +77,11 @@ export default function PortfolioDetailPage() {
             </span>
           </div>
 
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-blue-950 sm:text-4xl md:text-5xl">
             {project.title}
           </h1>
 
-          <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base leading-relaxed">
             {project.short}
           </p>
         </div>

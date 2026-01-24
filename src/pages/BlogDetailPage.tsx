@@ -47,38 +47,38 @@ export default function BlogDetailPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Top Hero / Breadcrumb */}
-      <section className="border-b bg-gradient-to-r from-indigo-50 via-white to-purple-50">
-        <div className="mx-auto w-full max-w-5xl px-4 pt-16 pb-8 md:px-6">
+      <section className="border-b bg-gradient-to-br from-blue-50 via-white to-sky-50">
+        <div className="mx-auto w-full max-w-5xl px-4 pt-10 pb-8 md:px-6">
           <Link
             to="/blog"
-            className="inline-flex items-center text-xs font-medium text-indigo-600"
+            className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-700"
           >
             <ArrowLeft className="mr-1 h-3.5 w-3.5" />
             Back to blog
           </Link>
 
           <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-            <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1">
-              <Calendar className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm border border-gray-100">
+              <Calendar className="h-3.5 w-3.5 text-blue-500" />
               <span>{post.date}</span>
             </div>
 
-            <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1">
-              <Clock className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 shadow-sm border border-gray-100">
+              <Clock className="h-3.5 w-3.5 text-blue-500" />
               <span>{post.readTime}</span>
             </div>
 
-            <div className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-indigo-700">
+            <div className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-blue-700 border border-blue-100">
               <Tag className="h-3.5 w-3.5" />
               <span>{post.tag}</span>
             </div>
           </div>
 
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-blue-950 sm:text-4xl md:text-5xl leading-tight">
             {post.title}
           </h1>
 
-          <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base leading-relaxed">
             {post.description}
           </p>
         </div>

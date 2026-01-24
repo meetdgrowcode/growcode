@@ -32,6 +32,7 @@ type SliderSettings = {
   accessibility?: boolean;
   responsive?: any[];
   centerMode?: boolean;
+  mobileFirst?: boolean;
 };
 
 // ---- Scroll reveal hook (no framer-motion) ----
@@ -59,7 +60,7 @@ function useRevealOnScroll() {
 
 // Simple avatar fallback
 const Avatar = ({ name }: { name: string }) => (
-  <div className="relative h-24 w-24 mx-auto rounded-full bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">
+  <div className="relative h-24 w-24 mx-auto rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">
     <span className="absolute inset-0 rounded-full border border-white/30 animate-pulse" />
     <span className="relative z-10">
       {name
@@ -88,19 +89,19 @@ export function About() {
 
   const sliderSettings: SliderSettings = {
     infinite: true,
-    speed: 450,
-    slidesToShow: 3,
+    speed: 500,
+    slidesToShow: 3, // Desktop default
     slidesToScroll: 1,
     adaptiveHeight: false,
     arrows: false,
     dots: false,
     autoplay: true,
-    autoplaySpeed: 2800,
+    autoplaySpeed: 3000,
     pauseOnHover: true,
     accessibility: true,
     responsive: [
       {
-        breakpoint: 1024, // tablet
+        breakpoint: 1024, // < 1024px
         settings: {
           slidesToShow: 2,
           slidesToScroll: 1,
@@ -108,7 +109,7 @@ export function About() {
         },
       },
       {
-        breakpoint: 640, // mobile
+        breakpoint: 640, // < 640px
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
@@ -130,11 +131,11 @@ export function About() {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       {/* HERO */}
-      <section className="relative py-16 md:py-20 lg:py-24 reveal">
+      <section className="relative py-10 md:py-14 lg:py-16 reveal">
         {/* animated gradient background */}
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50" />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-sky-50" />
         <div className="pointer-events-none absolute -right-40 -top-40 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" />
 
         <div className="container mx-auto px-4 max-w-4xl flex flex-col items-center text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] text-blue-700 shadow-sm backdrop-blur">
@@ -142,13 +143,13 @@ export function About() {
             About Growcode Solution
           </span>
 
-          <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
+          <h1 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-extrabold text-blue-950 leading-tight">
             We don&apos;t just build{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-700 via-blue-500 to-sky-400 bg-clip-text text-transparent">
               products
             </span>
             , we craft{" "}
-            <span className="underline decoration-indigo-300 decoration-4 underline-offset-4">
+            <span className="underline decoration-blue-300 decoration-4 underline-offset-4">
               experiences.
             </span>
           </h1>
@@ -162,7 +163,7 @@ export function About() {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
             <Button
               size="lg"
-              className="rounded-full flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95 transition"
+              className="rounded-full flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95 transition bg-blue-600 hover:bg-blue-700 text-white"
               asChild
             >
               <Link to="/contact">
@@ -174,7 +175,7 @@ export function About() {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full flex items-center gap-2 border-gray-300 bg-white/80 hover:border-blue-300 hover:bg-blue-50/60 shadow-sm hover:shadow-md active:scale-95 transition"
+              className="rounded-full flex items-center gap-2 border-gray-300 bg-white/80 hover:border-blue-300 hover:bg-blue-50/60 shadow-sm hover:shadow-md active:scale-95 transition text-gray-700"
               asChild
             >
               <Link to="/portfolio">
@@ -219,10 +220,10 @@ export function About() {
       </section>
 
       {/* WHO WE ARE + PROCESS */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-white to-gray-50 reveal">
+      <section className="py-12 md:py-16 bg-gradient-to-b from-white to-slate-50 reveal">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <h2 className="text-2xl md:text-3xl font-bold text-blue-950">
               Who we are
             </h2>
             <p className="mt-3 text-sm md:text-base text-gray-600">
@@ -241,16 +242,16 @@ export function About() {
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-                  <p className="text-xs text-gray-500 mb-1">Core strengths</p>
+                <div className="rounded-2xl bg-white p-4 shadow-sm border border-blue-100 hover:border-blue-200 transition">
+                  <p className="text-xs text-blue-500 font-semibold mb-1 uppercase tracking-wider">Core strengths</p>
                   <ul className="text-xs md:text-sm text-gray-700 space-y-1">
                     <li>• Modern React / Next.js</li>
                     <li>• Clean, scalable UI systems</li>
                     <li>• Pixel-perfect frontends</li>
                   </ul>
                 </div>
-                <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-                  <p className="text-xs text-gray-500 mb-1">How we work</p>
+                <div className="rounded-2xl bg-white p-4 shadow-sm border border-blue-100 hover:border-blue-200 transition">
+                  <p className="text-xs text-blue-500 font-semibold mb-1 uppercase tracking-wider">How we work</p>
                   <ul className="text-xs md:text-sm text-gray-700 space-y-1">
                     <li>• Small, dedicated teams</li>
                     <li>• Weekly demos & feedback</li>
@@ -262,7 +263,7 @@ export function About() {
 
             {/* Process steps */}
             <div className="space-y-4">
-              <h3 className="text-lg md:text-xl font-semibold text-gray-900 flex items-center gap-2 justify-center md:justify-start">
+              <h3 className="text-lg md:text-xl font-semibold text-blue-950 flex items-center gap-2 justify-center md:justify-start">
                 <HeartHandshake className="h-5 w-5 text-blue-600" />
                 Our process
               </h3>
@@ -286,7 +287,7 @@ export function About() {
                 ].map((item) => (
                   <div
                     key={item.step}
-                    className="flex gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm hover:shadow-md transition"
+                    className="flex gap-3 rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-sm hover:shadow-md transition hover:border-blue-200"
                   >
                     <div className="mt-0.5">
                       <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-[11px] font-semibold text-blue-700">
@@ -310,10 +311,10 @@ export function About() {
       </section>
 
       {/* VALUES SECTION */}
-      <section className="py-14 md:py-18 reveal">
+      <section className="py-14 md:py-18 reveal bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-blue-950">
               The values that drive us
             </h2>
             <p className="text-sm md:text-base text-gray-600">
@@ -343,14 +344,14 @@ export function About() {
               ].map((value, i) => (
                 <Card
                   key={i}
-                  className="group relative overflow-hidden border border-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 rounded-2xl"
+                  className="group relative overflow-hidden border border-blue-100 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl bg-white"
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-indigo-50 opacity-0 group-hover:opacity-100 transition" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-sky-50 opacity-0 group-hover:opacity-100 transition" />
                   <CardContent className="relative px-8 py-9 text-left">
-                    <div className="inline-flex items-center justify-center rounded-2xl bg-blue-50 p-4 mb-5">
+                    <div className="inline-flex items-center justify-center rounded-2xl bg-blue-50 p-4 mb-5 group-hover:bg-blue-100 transition-colors">
                       <value.icon className="h-8 w-8 text-blue-600" />
                     </div>
-                    <h3 className="text-lg md:text-xl font-semibold mb-2 text-gray-900">
+                    <h3 className="text-lg md:text-xl font-semibold mb-2 text-blue-900">
                       {value.title}
                     </h3>
                     <p className="text-sm md:text-base text-gray-600 leading-relaxed">
@@ -365,11 +366,11 @@ export function About() {
       </section>
 
       {/* TEAM SECTION WITH SLIDER */}
-      <section className="py-16 md:py-20 bg-gray-50 reveal">
+      <section className="py-16 md:py-20 bg-slate-50 reveal">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
             <div className="text-center md:text-left">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+              <h2 className="text-2xl md:text-3xl font-bold text-blue-950">
                 Meet the people behind the pixels
               </h2>
               <p className="mt-2 text-sm md:text-base text-gray-600 max-w-md mx-auto md:mx-0">
@@ -401,7 +402,7 @@ export function About() {
               <Slider ref={sliderRef} {...sliderSettings}>
                 {teams.map((member, index) => (
                   <div key={index} className="px-3">
-                    <Card className="mx-auto max-w-xs bg-white shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 rounded-2xl">
+                    <Card className="mx-auto w-full max-w-sm bg-white shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100 rounded-2xl">
                       <CardContent className="p-8 text-center">
                         <Avatar name={member.name} />
                         <h3 className="mt-6 text-lg font-semibold text-gray-900">
@@ -425,10 +426,10 @@ export function About() {
       </section>
 
       {/* CULTURE / LIFE AT GROWCODE */}
-      <section className="py-14 md:py-18 reveal">
+      <section className="py-14 md:py-18 reveal bg-white">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-3xl mx-auto mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <h2 className="text-2xl md:text-3xl font-bold text-blue-950">
               Life at Growcode
             </h2>
             <p className="mt-2 text-sm md:text-base text-gray-600">
@@ -438,8 +439,8 @@ export function About() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-lg transition">
-              <p className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm hover:shadow-lg transition hover:border-blue-200">
+              <p className="text-sm font-semibold text-blue-900 mb-2">
                 Flexible & Focused
               </p>
               <p className="text-xs md:text-sm text-gray-600">
@@ -447,8 +448,8 @@ export function About() {
                 collaboration so we can do our best work without burning out.
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-lg transition">
-              <p className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm hover:shadow-lg transition hover:border-blue-200">
+              <p className="text-sm font-semibold text-blue-900 mb-2">
                 Learning culture
               </p>
               <p className="text-xs md:text-sm text-gray-600">
@@ -456,8 +457,8 @@ export function About() {
                 keep everyone sharp and up to date with new tools.
               </p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm hover:shadow-lg transition">
-              <p className="text-sm font-semibold text-gray-900 mb-2">
+            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm hover:shadow-lg transition hover:border-blue-200">
+              <p className="text-sm font-semibold text-blue-900 mb-2">
                 People-first
               </p>
               <p className="text-xs md:text-sm text-gray-600">
@@ -470,12 +471,12 @@ export function About() {
       </section>
 
       {/* CTA */}
-      <section className="py-12 md:py-16 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 reveal">
+      <section className="py-12 md:py-16 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 reveal">
         <div className="container mx-auto px-4 max-w-5xl text-center text-white">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">
             Have an idea in mind?
           </h2>
-          <p className="text-sm md:text-base text-blue-100 max-w-2xl mx-auto mb-6">
+          <p className="text-sm md:text-base text-blue-50 max-w-2xl mx-auto mb-6">
             Tell us about your product, and we&apos;ll help you shape the
             roadmap, UX, and tech stack from day zero.
           </p>
@@ -490,7 +491,7 @@ export function About() {
             <Button
               size="lg"
               variant="outline"
-              className="rounded-full border-white/60 text-blue-700  active:scale-95 transition flex items-center gap-2"
+              className="rounded-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white hover:text-white active:scale-95 transition flex items-center gap-2"
               asChild
             >
               <Link to="/portfolio">View portfolio</Link>

@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { ArrowLeft } from "lucide-react";
 
 type ServiceInfo = {
   title: string;
@@ -141,11 +142,11 @@ export default function ServiceDetails() {
 
   if (!service) {
     return (
-      <div className="py-20 px-4 text-center">
-        <h3 className="text-2xl font-semibold">Service not found</h3>
+      <div className="min-h-screen py-20 px-4 text-center bg-white flex flex-col items-center justify-center">
+        <h3 className="text-2xl font-semibold text-gray-900">Service not found</h3>
         <p className="text-gray-600 mt-2">
           Try visiting our{" "}
-          <Link to="/services" className="text-blue-600 underline">
+          <Link to="/services" className="text-blue-600 underline hover:text-blue-700">
             services page
           </Link>
           .
@@ -155,87 +156,100 @@ export default function ServiceDetails() {
   }
 
   return (
-    <div className="flex justify-center py-12 px-4">
-      <Card className="max-w-3xl w-full">
-        <CardHeader>
-          <CardTitle className="text-3xl">{service.title}</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Overview */}
-          <div>
-            <p className="text-gray-700">{service.overview}</p>
-            <p className="text-gray-600 mt-2">{service.description}</p>
-          </div>
-
-          {/* Deliverables */}
-          <div>
-            <h4 className="text-lg font-semibold">What you get</h4>
-            <ul className="mt-3 space-y-2">
-              {service.deliverables.map((d, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-blue-600" />
-                  <span className="text-gray-700">{d}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Timeline & Ideal For */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <h5 className="font-semibold">Typical timeline</h5>
-              <p className="text-gray-700 mt-2">{service.timeline}</p>
-            </div>
-            <div>
-              <h5 className="font-semibold">Ideal for</h5>
-              <p className="text-gray-700 mt-2">{service.idealFor}</p>
-            </div>
-          </div>
-
-          {/* Tech Stack */}
-          <div>
-            <h5 className="font-semibold">Tech & tools</h5>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {service.techStack.map((t, i) => (
-                <span
-                  key={i}
-                  className="rounded-full border px-3 py-1 text-sm text-gray-700"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Case study (optional) */}
-          {service.caseStudy && (
-            <div>
-              <h5 className="font-semibold">Case study</h5>
-              <p className="text-gray-700 mt-2">
-                <strong>{service.caseStudy.title}:</strong>{" "}
-                {service.caseStudy.blurb}
-              </p>
-            </div>
-          )}
-
-          {/* CTA */}
-          {/* CTA */}
-          <div className="flex justify-center md:justify-end mt-6">
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {/* Header */}
+        <section className="bg-white border-b border-gray-100">
+            <div className="max-w-4xl mx-auto px-4 py-8 md:py-12">
             <Link
-              to="/contact"
-              className="w-full md:w-auto flex justify-center md:justify-end"
+                to="/services"
+                className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 mb-6"
             >
-              <Button
-                size="lg"
-                className="w-full md:w-auto text-center whitespace-normal break-words px-6 py-3"
-              >
-                Contact us about {service.title}
-              </Button>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to all services
             </Link>
-          </div>
-        </CardContent>
-      </Card>
+            <h1 className="text-3xl md:text-5xl font-bold text-blue-950 mb-4">{service.title}</h1>
+            <p className="text-lg text-gray-600 max-w-2xl">{service.overview}</p>
+            </div>
+        </section>
+
+      <div className="flex justify-center py-10 px-4">
+        <Card className="max-w-4xl w-full bg-white border border-gray-100 shadow-sm">
+          <CardContent className="space-y-8 p-6 md:p-10">
+            {/* Overview */}
+            <div>
+              <h3 className="text-xl font-bold text-blue-950 mb-3">Service Details</h3>
+              <p className="text-gray-600 leading-relaxed">{service.description}</p>
+            </div>
+
+            {/* Deliverables */}
+            <div>
+              <h4 className="text-lg font-semibold text-blue-950">What you get</h4>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                {service.deliverables.map((d, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                     <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-600 shrink-0" />
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="h-px bg-gray-100 w-full" />
+
+            {/* Timeline & Ideal For */}
+            <div className="grid gap-8 md:grid-cols-2">
+              <div>
+                <h5 className="font-semibold text-blue-950">Typical timeline</h5>
+                <p className="text-gray-700 mt-2 text-sm">{service.timeline}</p>
+              </div>
+              <div>
+                <h5 className="font-semibold text-blue-950">Ideal for</h5>
+                <p className="text-gray-700 mt-2 text-sm">{service.idealFor}</p>
+              </div>
+            </div>
+
+            {/* Tech Stack */}
+            <div>
+              <h5 className="font-semibold text-blue-950">Tech & tools</h5>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {service.techStack.map((t, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700"
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Case study (optional) */}
+            {service.caseStudy && (
+              <div className="rounded-xl bg-blue-50 p-6 border border-blue-100">
+                <h5 className="font-semibold text-blue-900 border-b border-blue-200 pb-2 mb-2">Success Story: {service.caseStudy.title}</h5>
+                <p className="text-blue-800/80 text-sm">
+                  {service.caseStudy.blurb}
+                </p>
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="pt-6 flex justify-center md:justify-end">
+              <Link
+                to="/contact"
+                className="w-full md:w-auto"
+              >
+                <Button
+                  size="lg"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 shadow-md hover:shadow-lg transition-all"
+                >
+                  Contact us about {service.title}
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -119,20 +119,20 @@ export default function PrivacyPolicy() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* HERO / HEADER */}
-      <section className="relative border-b bg-gradient-to-br from-sky-50 via-white to-indigo-50">
-        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.3)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(129,140,248,0.3)_0,_transparent_55%)]" />
-        <div className="relative mx-auto w-full max-w-6xl px-4 pt-16 pb-12 md:px-6 lg:px-8">
+      <section className="relative border-b bg-gradient-to-br from-blue-50 via-white to-sky-50">
+        <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(14,165,233,0.15)_0,_transparent_55%)]" />
+        <div className="relative mx-auto w-full max-w-6xl px-4 pt-10 pb-12 md:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-slate-700 shadow-sm backdrop-blur hover:bg-white transition"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-gray-700 shadow-sm backdrop-blur hover:bg-white transition"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to Home
               </Link>
 
-              <span className="hidden items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700 md:inline-flex">
+              <span className="hidden items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-medium text-blue-700 md:inline-flex">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Privacy-first by design
               </span>
@@ -140,7 +140,7 @@ export default function PrivacyPolicy() {
 
             <button
               onClick={handleDownloadPdf}
-              className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-600 px-3 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-sky-700 transition"
+              className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-600 px-3 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-blue-700 transition"
             >
               <Download className="h-3.5 w-3.5" />
               Download PDF
@@ -149,16 +149,16 @@ export default function PrivacyPolicy() {
 
           <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)] md:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200">
-                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-sky-500" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-medium text-gray-700 ring-1 ring-gray-200">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-blue-500" />
                 Official Privacy Policy
               </div>
 
-              <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+              <h1 className="mt-4 text-3xl font-bold tracking-tight text-blue-950 sm:text-4xl md:text-5xl">
                 Privacy Policy
               </h1>
 
-              <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
+              <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base">
                 This Privacy Policy explains how we collect, use, store and
                 protect personal data when you visit our website, contact us, or
                 use our services. By using our website and services, you agree
@@ -166,46 +166,46 @@ export default function PrivacyPolicy() {
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">
-                  <CalendarDays className="h-3.5 w-3.5 text-slate-600" />
-                  <span className="font-medium text-slate-800">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 ring-1 ring-gray-200">
+                  <CalendarDays className="h-3.5 w-3.5 text-gray-600" />
+                  <span className="font-medium text-gray-800">
                     Last reviewed:
                   </span>
-                  <span className="text-slate-700">{lastReviewLabel}</span>
+                  <span className="text-gray-700">{lastReviewLabel}</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 ring-1 ring-sky-200">
-                  <RefreshCcw className="h-3.5 w-3.5 text-sky-600" />
-                  <span className="font-medium text-slate-800">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 ring-1 ring-blue-200">
+                  <RefreshCcw className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="font-medium text-gray-800">
                     Next scheduled review:
                   </span>
-                  <span className="text-slate-700">{nextReviewLabel}</span>
+                  <span className="text-gray-700">{nextReviewLabel}</span>
                 </div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] text-slate-700">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3 py-1 text-[11px] text-gray-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                   Automatically reviewed every 6 months
                 </div>
               </div>
             </div>
 
             <div className="md:justify-self-end">
-              <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-xs text-slate-700 shadow-sm sm:p-5">
-                <div className="absolute -top-6 -right-10 h-24 w-24 rounded-full bg-sky-100 blur-2xl" />
-                <div className="absolute -bottom-10 -left-4 h-20 w-28 rounded-full bg-emerald-100 blur-2xl" />
+              <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-4 text-xs text-gray-700 shadow-sm sm:p-5">
+                <div className="absolute -top-6 -right-10 h-24 w-24 rounded-full bg-blue-50 blur-2xl" />
+                <div className="absolute -bottom-10 -left-4 h-20 w-28 rounded-full bg-sky-50 blur-2xl" />
 
                 <div className="relative space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-700">
-                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  <div className="inline-flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 text-[11px] font-medium text-gray-700">
+                    <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
                     Enterprise-grade governance
                   </div>
-                  <p className="text-[13px] leading-relaxed text-slate-700">
+                  <p className="text-[13px] leading-relaxed text-gray-700">
                     We handle personal data for clients across different
                     geographies and industries. Our internal processes are
                     aligned with modern data protection expectations and audit
                     readiness.
                   </p>
-                  <ul className="space-y-1.5 text-[12px] text-slate-700">
+                  <ul className="space-y-1.5 text-[12px] text-gray-700">
                     <li className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-500" />
                       Secure infrastructure & access controls
                     </li>
                     <li className="flex items-start gap-2">
@@ -213,7 +213,7 @@ export default function PrivacyPolicy() {
                       Clear data lifecycle & retention
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-500" />
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-gray-400" />
                       Transparent communication channels
                     </li>
                   </ul>
@@ -230,9 +230,9 @@ export default function PrivacyPolicy() {
           {/* Policy text (PDF source) */}
           <article
             ref={policyRef}
-            className="overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-8"
+            className="overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 sm:p-8"
           >
-            <div className="prose prose-sm sm:prose-base max-w-none text-gray-700">
+            <div className="prose prose-sm sm:prose-base max-w-none text-gray-700 prose-headings:text-blue-950 prose-a:text-blue-600">
               <h2>1. Who we are</h2>
               <p>
                 We are a software and IT services company providing product
@@ -513,14 +513,14 @@ export default function PrivacyPolicy() {
 
           {/* Sidebar – visible on page, not in PDF */}
           <aside className="space-y-5 lg:pt-1">
-            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Info className="h-4 w-4 text-sky-500" />
+            <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+              <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+                <Info className="h-4 w-4 text-blue-500" />
                 At a glance
               </div>
-              <ul className="mt-3 space-y-2 text-xs text-slate-600">
+              <ul className="mt-3 space-y-2 text-xs text-gray-600">
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-500" />
                   We only collect data needed to deliver and improve our
                   services.
                 </li>
@@ -529,21 +529,21 @@ export default function PrivacyPolicy() {
                   No selling of personal data to third parties.
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-500" />
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-gray-400" />
                   Transparent options to exercise your privacy rights.
                 </li>
               </ul>
             </div>
 
-            <div className="rounded-2xl bg-sky-50 text-slate-900 p-5 shadow-sm ring-1 ring-sky-100">
+            <div className="rounded-2xl bg-sky-50 text-blue-900 p-5 shadow-sm ring-1 ring-sky-100">
               <h3 className="text-sm font-semibold">Need clarification?</h3>
-              <p className="mt-2 text-xs text-slate-700">
+              <p className="mt-2 text-xs text-blue-800/80">
                 If you have questions about how we handle your data, our team is
                 happy to walk you through this Policy in more detail.
               </p>
               <Link
                 to="/contact"
-                className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-sky-600 px-4 py-2 text-xs font-medium text-white shadow hover:bg-sky-700 transition"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow hover:bg-blue-700 transition"
               >
                 Contact our team
               </Link>

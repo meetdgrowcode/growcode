@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { portfolioProjects } from "@/data/portfolioProjects";
+import { Reveal } from "@/components/Reveal";
 
 type Filter = "All" | "Web" | "Mobile" | "UI/UX";
 
@@ -99,17 +100,17 @@ const Portfolio: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Hero (same light background as before) */}
-      <header className="py-12 md:py-20 bg-gradient-to-b from-gray-50 to-white">
+      {/* Hero */}
+      <header className="py-10 md:py-16 bg-gradient-to-b from-blue-50 to-white">
         <div className="container mx-auto px-4 max-w-5xl text-center">
-          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-100">
+          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-100 shadow-sm">
             Selected Work
           </span>
-          <h1 className="mt-4 text-3xl md:text-4xl font-bold text-gray-900">
+          <h1 className="mt-4 text-3xl md:text-5xl font-bold text-blue-950">
             Our Portfolio
           </h1>
 
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
+          <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
             Selected projects showcasing product design, web &amp; mobile
             engineering. Click any project to view full details.
           </p>
@@ -117,7 +118,7 @@ const Portfolio: React.FC = () => {
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link
               to="/contact"
-              className="inline-block rounded-full bg-blue-600 text-white px-5 py-2.5 text-sm font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition"
+              className="inline-block rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
             >
               Work with us
             </Link>
@@ -130,6 +131,7 @@ const Portfolio: React.FC = () => {
 
       {/* Filters (unchanged look, light BG) */}
       <section className="py-8 px-4 bg-white">
+        <Reveal>
         <div className="container mx-auto max-w-5xl">
           <div className="flex flex-wrap items-center justify-center gap-3">
             {(["All", "Web", "Mobile", "UI/UX"] as const).map((c) => (
@@ -152,10 +154,12 @@ const Portfolio: React.FC = () => {
             ))}
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Projects grid */}
       <section className="px-4 pb-16 bg-white">
+        <Reveal>
         <div className="container mx-auto max-w-7xl">
           <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredProjects.map((p, index) => (
@@ -217,6 +221,7 @@ const Portfolio: React.FC = () => {
             ))}
           </div>
         </div>
+        </Reveal>
       </section>
 
       {/* Client reviews (same light BG style) */}

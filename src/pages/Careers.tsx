@@ -65,7 +65,7 @@ export default function Careers() {
   return (
     <div className="min-h-screen bg-gray-50 select-none">
       {/* Hero Section */}
-      <section className="px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-20">
+      <section className="px-4 py-10 text-center sm:px-6 lg:px-8 lg:py-16">
         <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-1 text-xs font-medium text-indigo-700 opacity-0 animate-fade-in">
           <Sparkles className="h-4 w-4" />
           Join our growing team
