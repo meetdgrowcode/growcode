@@ -2,6 +2,16 @@ import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { portfolioProjects } from "@/data/portfolioProjects";
 import { Reveal } from "@/components/Reveal";
+import { Button } from "@/components/ui/Button";
+import {
+  ArrowRight,
+  TrendingUp,
+  Globe2,
+  Users,
+  Award,
+  CheckCircle2,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/Card";
 
 type Filter = "All" | "Web" | "Mobile" | "UI/UX";
 
@@ -76,16 +86,12 @@ const reviews: Review[] = [
   },
 ];
 
-const Star = ({ filled }: { filled: boolean }) => (
-  <svg
-    aria-hidden="true"
-    className={`h-4 w-4 ${filled ? "text-yellow-400" : "text-gray-300"}`}
-    viewBox="0 0 20 20"
-    fill="currentColor"
-  >
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.163c.969 0 1.371 1.24.588 1.81l-3.37 2.447a1 1 0 00-.364 1.118l1.287 3.957c.3.922-.755 1.688-1.54 1.118L10 15.347l-3.391 2.577c-.784.57-1.838-.196-1.54-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.622 9.384c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69L9.049 2.927z" />
-  </svg>
-);
+const stats = [
+  { label: "Projects Delivered", value: "100+", icon: Award },
+  { label: "Client Retention", value: "95%", icon: Users },
+  { label: "Global Reach", value: "10+ Countries", icon: Globe2 },
+  { label: "Revenue Impact", value: "$50M+", icon: TrendingUp },
+];
 
 const Portfolio: React.FC = () => {
   const [filter, setFilter] = useState<Filter>("All");
@@ -101,207 +107,217 @@ const Portfolio: React.FC = () => {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
-      <header className="py-10 md:py-16 bg-gradient-to-b from-blue-50 to-white">
-        <div className="container mx-auto px-4 max-w-5xl text-center">
-          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-600 ring-1 ring-blue-100 shadow-sm">
-            Selected Work
-          </span>
-          <h1 className="mt-4 text-3xl md:text-5xl font-bold text-blue-950">
-            Our Portfolio
+      <section className="relative flex justify-center py-20 md:py-32 bg-gradient-to-b from-blue-50 via-white to-white overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-[30%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-blue-100/30 blur-3xl" />
+          <div className="absolute top-[20%] -right-[10%] w-[50vw] h-[50vw] rounded-full bg-sky-100/30 blur-3xl" />
+        </div>
+
+        <div className="container mx-auto px-4 max-w-5xl text-center relative z-10 space-y-8"> 
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-blue-950 leading-tight">
+            Our Work <span className="text-blue-600">is Our Proof</span>
           </h1>
 
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            Selected projects showcasing product design, web &amp; mobile
-            engineering. Click any project to view full details.
+          <p className="max-w-2xl text-xl text-gray-600 mx-auto leading-relaxed">
+            Selected projects showcasing product design, web & mobile engineering excellence. 
+            We build digital products that drive real business results.
           </p>
 
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Link
-              to="/contact"
-              className="inline-block rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition-all"
-            >
-              Work with us
-            </Link>
-            <span className="text-xs text-gray-500">
-              Available for product, web &amp; mobile builds
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Filters (unchanged look, light BG) */}
-      <section className="py-8 px-4 bg-white">
-        <Reveal>
-        <div className="container mx-auto max-w-5xl">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {(["All", "Web", "Mobile", "UI/UX"] as const).map((c) => (
-              <button
-                key={c}
-                onClick={() => setFilter(c)}
-                className={`relative px-4 py-2 rounded-full text-sm font-medium transition
-                  ${
-                    filter === c
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                aria-pressed={filter === c}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Link to="/contact">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               >
-                {filter === c && (
-                  <span className="pointer-events-none absolute inset-0 rounded-full ring-2 ring-blue-300/70" />
-                )}
-                <span className="relative z-10">{c}</span>
-              </button>
-            ))}
+                Start a Project
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
-        </Reveal>
       </section>
 
-      {/* Projects grid */}
-      <section className="px-4 pb-16 bg-white">
-        <Reveal>
-        <div className="container mx-auto max-w-7xl">
-          <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((p, index) => (
-              <article
-                key={p.id}
-                className="group bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 flex flex-col h-full hover:-translate-y-2 hover:shadow-xl hover:border-blue-100 transition"
-                style={{ animation: `fadeUp 0.4s ease-out ${index * 0.04}s both` }}
-              >
-                {/* media */}
-                <div className="relative h-44 bg-gray-100 overflow-hidden">
-                  <img
-                    src={p.img}
-                    alt={p.title}
-                    className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-105 group-hover:brightness-105"
-                    draggable={false}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-gray-900/20 via-transparent to-transparent" />
-                  <span className="absolute top-3 left-3 inline-flex items-center gap-2 bg-white/90 backdrop-blur rounded-full px-3 py-1 text-xs font-medium text-gray-900 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    {p.category}
-                  </span>
-                </div>
-
-                {/* content */}
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-600 flex-1">
-                    {p.short}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {p.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] text-gray-700"
-                      >
-                        {t}
-                      </span>
-                    ))}
+      {/* Stats Section */}
+      <section className="py-12 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div key={index} className="space-y-2 group">
+                  <div className="flex justify-center mb-4">
+                    <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="h-6 w-6" />
+                    </div>
                   </div>
+                  <div className="text-3xl font-bold text-blue-950">{stat.value}</div>
+                  <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+                    {stat.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <Link
-                      to={`/portfolio/${p.slug}`}
-                      className="inline-flex items-center gap-2 rounded-full bg-blue-600 text-white px-4 py-2 text-xs font-medium shadow-sm hover:bg-blue-700 hover:shadow-md active:scale-95 transition"
-                      aria-label={`View details for ${p.title}`}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                      <span>View details</span>
-                    </Link>
-                    <span className="text-[11px] text-gray-400">
-                      0{index + 1}
+      {/* Filters */}
+      <section className="py-12 px-4 bg-gray-50/50">
+        <Reveal>
+          <div className="container mx-auto max-w-5xl mb-12 text-center">
+             <h2 className="text-3xl font-bold text-blue-950 mb-6">Explore by Category</h2>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {(["All", "Web", "Mobile", "UI/UX"] as const).map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setFilter(c)}
+                  className={`relative px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300
+                    ${
+                      filter === c
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105"
+                        : "bg-white text-gray-600 border border-gray-200 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Projects grid */}
+        <Reveal>
+          <div className="container mx-auto max-w-7xl pb-16">
+            <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredProjects.map((p, index) => (
+                <article
+                  key={p.id}
+                  className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+                  style={{
+                    animation: `fadeUp 0.6s ease-out ${index * 0.1}s both`,
+                  }}
+                >
+                  {/* media */}
+                  <div className="relative h-60 bg-gray-100 overflow-hidden">
+                    <img
+                      src={p.img}
+                      alt={p.title}
+                      className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-110"
+                      draggable={false}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                    
+                    <span className="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-blue-950 shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      {p.category}
                     </span>
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  {/* content */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="mb-4">
+                        <h3 className="text-xl font-bold text-blue-950 group-hover:text-blue-600 transition-colors">
+                        {p.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+                        {p.short}
+                        </p>
+                    </div>
+
+                    <div className="mt-auto space-y-6">
+                        <div className="flex flex-wrap gap-2">
+                        {p.tags.slice(0, 3).map((t) => (
+                            <span
+                            key={t}
+                            className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 border border-blue-100"
+                            >
+                            {t}
+                            </span>
+                        ))}
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                            <Link
+                                to={`/portfolio/${p.slug}`}
+                                className="text-sm font-semibold text-blue-600 flex items-center gap-1 group/link"
+                            >
+                                View Case Study <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                            </Link>
+                        </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
         </Reveal>
       </section>
 
-      {/* Client reviews (same light BG style) */}
-      <section className="py-12 bg-gradient-to-b from-white to-gray-50 border-t border-gray-100">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-              What our clients say
-            </h2>
-            <p className="mt-2 text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
-              Real feedback from teams we&apos;ve worked with — quality,
-              delivery &amp; collaboration.
-            </p>
-          </div>
+      {/* Client reviews */}
+       <section className="py-20 bg-blue-950 text-white relative overflow-hidden">
+          {/* Decorative Pattern */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-800 to-transparent opacity-50" />
+           <div className="absolute -right-20 bottom-20 w-96 h-96 bg-blue-900/30 rounded-full blur-3xl rounded-r-none" />
 
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((r, index) => (
-              <figure
-                key={r.id}
-                className="relative bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:-translate-y-1.5 hover:shadow-lg hover:border-blue-100 transition"
-                style={{
-                  animation: `fadeUp 0.4s ease-out ${0.1 + index * 0.03}s both`,
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    {r.avatar ? (
-                      <img
-                        src={r.avatar}
-                        alt={r.name}
-                        className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
-                        {r.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join("")}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <figcaption className="text-sm font-semibold text-gray-900">
-                          {r.name}
-                        </figcaption>
-                        {r.role && (
-                          <p className="mt-0.5 text-[11px] text-gray-500">
-                            {r.role}
-                            {r.company ? ` • ${r.company}` : ""}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star key={i} filled={i < r.rating} />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="mt-3 text-xs text-gray-700 sm:text-sm">
-                      “{r.quote}”
-                    </p>
-                  </div>
-                </div>
-              </figure>
-            ))}
-          </div>
+          <div className="max-w-7xl mx-auto px-4 relative z-10">
+              <div className="text-center mb-16 space-y-4">
+                  <h2 className="text-3xl md:text-4xl font-bold">Trusted by Industry Leaders</h2>
+                  <p className="text-blue-200 max-w-2xl mx-auto text-lg">Don't just take our word for it.</p>
+              </div>
 
-          <div className="mt-8 text-center">
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-medium text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-50 hover:border-blue-400 transition"
-            >
-              Let&apos;s talk about your product
-            </Link>
+              <div className="grid md:grid-cols-3 gap-8">
+                  {reviews.slice(0, 3).map((r, i) => (
+                      <Card key={i} className="bg-blue-900/50 border-blue-800 text-blue-50 hover:bg-blue-900/70 transition-colors">
+                          <CardContent className="p-8 space-y-6">
+                              <div className="flex gap-1 text-yellow-400">
+                                  {[...Array(5)].map((_, i) => (
+                                      <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                  ))}
+                              </div>
+                              <blockquote className="text-lg italic leading-relaxed">"{r.quote}"</blockquote>
+                              <div className="flex items-center gap-4">
+                                   <div className="h-10 w-10 rounded-full bg-blue-700 flex items-center justify-center font-bold text-blue-200 shrink-0">
+                                      {r.name[0]}
+                                  </div>
+                                  <div>
+                                      <div className="font-semibold text-white">{r.name}</div>
+                                      <div className="text-sm text-blue-300">{r.role}</div>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  ))}
+              </div>
           </div>
-        </div>
       </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-white">
+            <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-10 md:p-16 text-center text-white shadow-2xl relative overflow-hidden">
+                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+                 <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
+
+                <div className="relative z-10 space-y-8">
+                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight">Have a project in mind?</h2>
+                    <p className="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
+                        Let's collaborate to build something extraordinary. Our team is ready to bring your vision to life.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Link to="/contact">
+                            <Button size="lg" className="h-14 px-10 text-lg bg-white text-blue-600 hover:bg-blue-50 border-0 rounded-full shadow-lg hover:translate-y-[-2px] transition-all">
+                                Get in Touch
+                            </Button>
+                        </Link>
+                         <Link to="/services">
+                           <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-2 border-blue-200 text-blue-50 hover:bg-white/10 hover:text-white rounded-full transition-all">
+                                View Services
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </section>
 
       {/* CSS keyframes for subtle fade-up animation */}
       <style>

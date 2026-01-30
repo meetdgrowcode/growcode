@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
+import { CalendarDays, FileText, LayoutGrid, Timer } from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -92,31 +93,58 @@ export default function ApplyLeaveModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Apply Leave</DialogTitle>
-          <DialogDescription>
-            Fill out the form below to apply for your leave.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white rounded-2xl border-none shadow-2xl">
+        {/* Decorative Header Background */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white">
+          <DialogHeader className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                <CalendarDays className="w-6 h-6 text-white" />
+              </div>
+              <DialogTitle className="text-2xl font-bold text-white">Apply Leave</DialogTitle>
+            </div>
+            <DialogDescription className="text-blue-100">
+              Fill out the details below to submit your leave request.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>One Day / From Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Timer className="w-4 h-4 text-blue-600" />
+                From Date
+              </Label>
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all"
+              />
             </div>
 
-            <div>
-              <Label>To Date</Label>
-              <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <Timer className="w-4 h-4 text-blue-600" />
+                To Date
+              </Label>
+              <Input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all"
+              />
             </div>
           </div>
 
-          <div>
-            <Label>Leave Type</Label>
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <LayoutGrid className="w-4 h-4 text-blue-600" />
+              Leave Type
+            </Label>
             <Select value={leaveType} onValueChange={setLeaveType}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -126,18 +154,34 @@ export default function ApplyLeaveModal({
             </Select>
           </div>
 
-          <div>
-            <Label>Reason</Label>
-            <Input value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} placeholder="Reason for leave..." />
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-600" />
+              Reason
+            </Label>
+            <Input
+              value={leaveReason}
+              onChange={(e) => setLeaveReason(e.target.value)}
+              placeholder="e.g. Doctor appointment, Family function..."
+              className="h-11 bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all"
+            />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="p-6 pt-2 bg-gray-50/50">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-11 px-6 rounded-xl border-gray-200 text-gray-600 hover:bg-gray-100 font-medium hover:text-gray-900 transition-colors"
+          >
             Cancel
           </Button>
-          <Button onClick={submitLeave} disabled={loading}>
-            {loading ? "Submitting..." : "Submit"}
+          <Button
+            onClick={submitLeave}
+            disabled={loading}
+            className="h-11 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 font-semibold transition-all duration-200"
+          >
+            {loading ? "Submitting..." : "Submit Request"}
           </Button>
         </DialogFooter>
       </DialogContent>
